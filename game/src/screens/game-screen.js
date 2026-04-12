@@ -18,13 +18,15 @@ const GameScreen = (() => {
 
   function init() {
     // Pause button
-    const pauseBtn  = document.getElementById('btn-pause');
-    const resumeBtn = document.getElementById('btn-resume');
-    const quitBtn   = document.getElementById('btn-quit-level');
+    const pauseBtn   = document.getElementById('btn-pause');
+    const resumeBtn  = document.getElementById('btn-resume');
+    const quitBtn    = document.getElementById('btn-quit-level');
+    const hudHomeBtn = document.getElementById('btn-hud-home');
 
-    if (pauseBtn)  pauseBtn.addEventListener('click',  _handlePause);
-    if (resumeBtn) resumeBtn.addEventListener('click', _handleResume);
-    if (quitBtn)   quitBtn.addEventListener('click',   _handleQuit);
+    if (pauseBtn)   pauseBtn.addEventListener('click',   _handlePause);
+    if (resumeBtn)  resumeBtn.addEventListener('click',  _handleResume);
+    if (quitBtn)    quitBtn.addEventListener('click',    _handleQuit);
+    if (hudHomeBtn) hudHomeBtn.addEventListener('click', _handleQuit);
   }
 
   // Called by App.startLevel(level, charId)

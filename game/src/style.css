@@ -197,6 +197,7 @@ html, body {
   transition: background var(--transition);
 }
 .icon-btn:hover { background: rgba(0,0,0,0.08); }
+.hud-home-btn { margin-left: auto; }
 
 .back-btn {
   background: none; border: none;

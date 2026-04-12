@@ -22,11 +22,13 @@ const Platformer = (() => {
   const BASE_JUMP   = -11;
 
   // Level state
-  let _level     = 1;
-  let _charId    = 'fluff';
-  let _charDef   = null;
+  let _level      = 1;
+  let _charId     = 'fluff';
+  let _charDef    = null;
   let _onComplete = null;
-  let _onFall    = null;
+  let _onFall     = null;
+  let _levelDone  = false;   // guard: fire onComplete only once
+  let _fellRecently = false; // guard: fire onFall only once per fall
 
   // Player state
   const player = {
@@ -115,10 +117,12 @@ const Platformer = (() => {
     }
 
     // Tunnel at the end — kid's original: "if you make it, you come in a tunnel"
-    _tunnel = { x: _levelWidth - 180, y: 260, w: 80, h: 100 };
+    // Sits on the end platform (y:340); player (h:36) walks at y:304, so tunnel
+    // entrance at y:290 catches the player center
+    _tunnel = { x: _levelWidth - 180, y: 290, w: 90, h: 60 };
 
-    // End platform to hold the tunnel
-    _platforms.push({ x: _levelWidth - 280, y: 340, w: 280, h: 20, color: '#6dbf67', type: 'ground', safe: true });
+    // End platform to hold the tunnel — wide and safe, can't fall off
+    _platforms.push({ x: _levelWidth - 320, y: 340, w: 320, h: 20, color: '#6dbf67', type: 'ground', safe: true });
 
     // Place player at start, above first platform
     player.x  = 60;
@@ -349,20 +353,26 @@ const Platformer = (() => {
 
   /* ── Tunnel detection ─────────────────────────────────────── */
   function _checkTunnel() {
-    if (!_tunnel) return;
+    if (!_tunnel || _levelDone) return;
     if (
       player.x + player.w > _tunnel.x &&
       player.x < _tunnel.x + _tunnel.w &&
       player.y + player.h > _tunnel.y &&
       player.y < _tunnel.y + _tunnel.h
     ) {
+      _levelDone = true;   // prevent re-firing every frame
+      _running   = false;  // stop the loop
+      cancelAnimationFrame(_rafId);
       if (_onComplete) _onComplete(_starsCollected);
     }
   }
 
-  /* ── Fall detection ───────────────────────────────────────── */
+  /* ── Fall detection ──────────────────────────────────────────── */
   function _checkFall(canvasH) {
+    if (_levelDone || _fellRecently) return;
     if (player.y > canvasH + 100) {
+      _fellRecently = true;             // prevent re-firing while falling
+      setTimeout(() => { _fellRecently = false; }, 2000);
       if (_onFall) _onFall();
     }
   }
@@ -636,12 +646,15 @@ const Platformer = (() => {
   }
 
   function startLevel(level, charId, onComplete, onFall) {
-    _level      = level;
-    _charId     = charId;
-    _charDef    = window.Characters ? Characters.getById(charId) : null;
-    _onComplete = onComplete;
-    _onFall     = onFall;
-    _frame      = 0;
+    _level        = level;
+    _charId       = charId;
+    _charDef      = window.Characters ? Characters.getById(charId) : null;
+    _onComplete   = onComplete;
+    _onFall       = onFall;
+    _frame        = 0;
+    _levelDone    = false;   // reset for new level
+    _fellRecently = false;   // reset for new level
+    _starsCollected = 0;     // reset star count
 
     _generateLevel(level);
     _resizeCanvas();
