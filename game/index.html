@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Bunny Dash — A learning adventure for warriors in recovery" />
+  <title>Bunny Dash 🐰</title>
+  <link rel="stylesheet" href="src/style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: SPLASH
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-splash" class="screen active">
+    <div class="splash-bg">
+      <div class="splash-clouds">
+        <div class="cloud c1"></div>
+        <div class="cloud c2"></div>
+        <div class="cloud c3"></div>
+      </div>
+      <div class="splash-center">
+        <div class="splash-title-block">
+          <div class="splash-bunny" id="splash-bunny" aria-hidden="true">🐰</div>
+          <h1 class="game-title">Bunny Dash</h1>
+          <p class="game-subtitle">A Learning Adventure for Warriors in Recovery</p>
+        </div>
+        <div class="splash-buttons">
+          <button class="btn-primary big-btn" id="btn-start-new" aria-label="Start new game">
+            🌟 Let's Go!
+          </button>
+          <button class="btn-secondary big-btn" id="btn-continue" aria-label="Continue saved game" style="display:none">
+            🐾 Continue Journey
+          </button>
+        </div>
+        <p class="splash-credit">Inspired by a kid with a notebook and a great heart 💛</p>
+      </div>
+      <div class="splash-grass"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: SETUP (name + grade + energy)
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-setup" class="screen">
+    <div class="setup-wrap">
+      <div class="setup-bunny bounce-anim" aria-hidden="true">🐰</div>
+      <h2 class="setup-title">Hey there, Warrior! 👋</h2>
+      <p class="setup-sub">Let's get you set up so Fluff knows who to cheer for!</p>
+
+      <label class="field-label" for="input-name">What should Fluff call you?</label>
+      <input id="input-name" class="field-input" type="text"
+             maxlength="20" placeholder="Your name or nickname" autocomplete="off" />
+
+      <label class="field-label" for="select-grade">What grade are you in?</label>
+      <select id="select-grade" class="field-select">
+        <option value="K">Kindergarten</option>
+        <option value="1">Grade 1</option>
+        <option value="2">Grade 2</option>
+        <option value="3" selected>Grade 3</option>
+        <option value="4">Grade 4</option>
+        <option value="5">Grade 5</option>
+        <option value="6">Grade 6</option>
+        <option value="7">Grade 7</option>
+        <option value="8">Grade 8</option>
+      </select>
+
+      <label class="field-label">How are you feeling today?</label>
+      <div class="energy-row" id="energy-picker" role="group" aria-label="Energy level">
+        <button class="energy-btn" data-e="1" aria-label="Very tired">😴<span>Very tired</span></button>
+        <button class="energy-btn" data-e="2" aria-label="A little tired">😐<span>A bit tired</span></button>
+        <button class="energy-btn active" data-e="3" aria-label="Okay">🙂<span>Okay!</span></button>
+        <button class="energy-btn" data-e="4" aria-label="Good">😊<span>Good!</span></button>
+        <button class="energy-btn" data-e="5" aria-label="Great">🌟<span>Great!</span></button>
+      </div>
+
+      <button class="btn-primary big-btn" id="btn-setup-done" aria-label="Start playing">
+        Let's Play! 🐾
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: HOME
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-home" class="screen">
+    <div class="home-header">
+      <div class="home-greeting" id="home-greeting">Hey, Warrior! 🌟</div>
+      <button class="icon-btn" id="btn-settings" aria-label="Settings">⚙️</button>
+    </div>
+
+    <div class="home-character-stage">
+      <div class="home-bunny-display">
+        <canvas id="home-bunny-canvas" width="200" height="200" aria-label="Your bunny character"></canvas>
+        <div class="home-bunny-name" id="home-bunny-name">Fluff</div>
+      </div>
+      <div class="home-stats">
+        <div class="stat-chip">🌟 <span id="stat-stars">0</span> Stars</div>
+        <div class="stat-chip">📚 Level <span id="stat-level">1</span></div>
+        <div class="stat-chip">✅ <span id="stat-correct">0</span> Answers</div>
+      </div>
+    </div>
+
+    <!-- Hope message — always visible on home screen -->
+    <div class="hope-banner" id="hope-banner" role="status" aria-live="polite">
+      <span class="hope-icon">💛</span>
+      <span class="hope-text" id="hope-text">Every level you complete is one more step forward. You've got this.</span>
+    </div>
+
+    <div class="home-actions">
+      <button class="btn-primary big-btn" id="btn-play" aria-label="Play next level">
+        🐾 Play Level <span id="home-level-num">1</span>
+      </button>
+      <button class="btn-secondary" id="btn-characters" aria-label="View characters">
+        🐰 My Bunnies
+      </button>
+      <button class="btn-secondary" id="btn-progress" aria-label="View my progress">
+        📊 My Progress
+      </button>
+    </div>
+
+    <!-- Streak badge -->
+    <div class="streak-area" id="streak-area" style="display:none">
+      <div class="streak-badge">🔥 <span id="streak-count">0</span> day streak!</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: CHARACTER SELECT / VIEW
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-characters" class="screen">
+    <div class="screen-header">
+      <button class="back-btn" id="btn-back-chars" aria-label="Back">← Back</button>
+      <h2>Your Bunny Team 🐰</h2>
+    </div>
+    <div class="character-grid" id="character-grid"></div>
+    <div class="char-lore-panel" id="char-lore-panel" style="display:none">
+      <div class="char-lore-close" id="char-lore-close">✕</div>
+      <div class="char-lore-content" id="char-lore-content">
+        <canvas id="lore-char-canvas" width="200" height="200" aria-hidden="true"></canvas>
+        <h3 id="lore-char-name" class="lore-char-name"></h3>
+        <div id="lore-char-ability" class="lore-char-ability"></div>
+        <p id="lore-char-text" class="lore-char-text"></p>
+        <p id="lore-lock-note" class="lore-lock-note"></p>
+        <button class="btn-primary" id="btn-select-char">Choose this Bunny</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: GAME (canvas platformer)
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-game" class="screen">
+    <div class="game-hud">
+      <button class="icon-btn" id="btn-pause" aria-label="Pause game">⏸</button>
+      <div class="hud-level">Level <span id="hud-level">1</span></div>
+      <div class="hud-stars">🌟 <span id="hud-stars">0</span></div>
+    </div>
+    <canvas id="game-canvas" aria-label="Game world"></canvas>
+    <div class="mobile-controls" id="mobile-controls" aria-label="Game controls">
+      <button class="ctrl-btn ctrl-left" id="ctrl-left" aria-label="Move left">◀</button>
+      <button class="ctrl-btn ctrl-jump" id="ctrl-jump" aria-label="Jump">▲</button>
+      <button class="ctrl-btn ctrl-right" id="ctrl-right" aria-label="Move right">▶</button>
+    </div>
+
+    <!-- Fall / respawn overlay -->
+    <div class="fall-overlay" id="fall-overlay" style="display:none">
+      <div class="fall-card">
+        <div class="fall-bunny" aria-hidden="true">🐰💫</div>
+        <p id="fall-message">Let's try again! You've got this! 💪</p>
+      </div>
+    </div>
+
+    <!-- Pause overlay -->
+    <div class="pause-overlay" id="pause-overlay" style="display:none">
+      <div class="pause-card">
+        <div class="pause-bunny" aria-hidden="true">🐰</div>
+        <h3>Taking a breather?</h3>
+        <p id="pause-hope">Rest is part of the journey. Fluff will wait for you. 💛</p>
+        <button class="btn-primary" id="btn-resume">▶ Keep Going!</button>
+        <button class="btn-secondary" id="btn-quit-level">🏠 Go Home</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: TUNNEL CEREMONY (level complete)
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-tunnel" class="screen">
+    <canvas id="tunnel-canvas" aria-label="Level complete celebration"></canvas>
+    <div class="tunnel-text" id="tunnel-text">
+      <div class="tunnel-emoji" aria-hidden="true">✨</div>
+      <div class="tunnel-message" id="tunnel-message">You made it through!</div>
+      <div class="tunnel-sub" id="tunnel-sub">Fluff is so proud of you.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: QUIZ (math keypad — kid's design)
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-quiz" class="screen">
+    <div class="quiz-wrap">
+      <div class="quiz-bunny-row">
+        <div class="quiz-bunny" id="quiz-bunny" aria-hidden="true">🐰</div>
+        <div class="quiz-speech" id="quiz-speech">You made it! Here comes your question 🌟</div>
+      </div>
+
+      <div class="quiz-question-box" id="quiz-question-box" role="region" aria-label="Math question">
+        <div class="quiz-question" id="quiz-question" aria-live="polite"></div>
+        <div class="quiz-subject-badge" id="quiz-subject-badge">Math</div>
+      </div>
+
+      <div class="quiz-answer-display" aria-live="polite" aria-label="Your answer">
+        <span id="quiz-answer-display">_</span>
+      </div>
+
+      <!-- Kid's original keypad: 0–9 shaped like phone keypad -->
+      <div class="keypad" id="keypad" role="group" aria-label="Number keypad">
+        <button class="key-btn" data-k="7" aria-label="7">7</button>
+        <button class="key-btn" data-k="8" aria-label="8">8</button>
+        <button class="key-btn" data-k="9" aria-label="9">9</button>
+        <button class="key-btn" data-k="4" aria-label="4">4</button>
+        <button class="key-btn" data-k="5" aria-label="5">5</button>
+        <button class="key-btn" data-k="6" aria-label="6">6</button>
+        <button class="key-btn" data-k="1" aria-label="1">1</button>
+        <button class="key-btn" data-k="2" aria-label="2">2</button>
+        <button class="key-btn" data-k="3" aria-label="3">3</button>
+        <button class="key-btn key-zero" data-k="0" aria-label="0">0</button>
+        <button class="key-btn key-del" id="key-del" aria-label="Delete">⌫</button>
+      </div>
+
+      <!-- Kid's original: "See Answer" button below the keypad -->
+      <button class="btn-see-answer" id="btn-see-answer" aria-label="See my answer">
+        🔍 SEE ANSWER
+      </button>
+
+      <!-- Feedback shown after wrong answer -->
+      <div class="quiz-feedback" id="quiz-feedback" style="display:none" role="alert" aria-live="assertive"></div>
+
+      <!-- Hint button -->
+      <button class="btn-hint" id="btn-hint" aria-label="Show hint">
+        💡 Hint <span id="hint-cost">(2 ⭐)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: PROGRESS
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-progress" class="screen">
+    <div class="screen-header">
+      <button class="back-btn" id="btn-back-prog" aria-label="Back">← Back</button>
+      <h2>Your Journey 📊</h2>
+    </div>
+    <div class="progress-wrap" id="progress-wrap"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SCREEN: UNLOCK CELEBRATION
+  ═══════════════════════════════════════════════ -->
+  <div id="screen-unlock" class="screen">
+    <canvas id="unlock-canvas" aria-label="Character unlocked celebration"></canvas>
+    <div class="unlock-content" id="unlock-content">
+      <div class="unlock-char" id="unlock-char" aria-hidden="true">🐰</div>
+      <h2 class="unlock-title" id="unlock-title">New Bunny Unlocked!</h2>
+      <div class="unlock-name" id="unlock-name">Baby</div>
+      <div class="unlock-lore" id="unlock-lore"></div>
+      <button class="btn-primary big-btn" id="btn-unlock-cont">Meet them! 🐾</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       GLOBAL: SETTINGS PANEL
+  ═══════════════════════════════════════════════ -->
+  <div id="settings-panel" class="overlay" style="display:none">
+    <div class="overlay-card">
+      <div class="overlay-header">
+        <h3>Settings ⚙️</h3>
+        <button class="icon-btn" id="btn-settings-close" aria-label="Close settings">✕</button>
+      </div>
+      <label class="toggle-label">
+        <span>Large text</span>
+        <input type="checkbox" id="set-large-text" />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle-label">
+        <span>High contrast</span>
+        <input type="checkbox" id="set-contrast" />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle-label">
+        <span>Reduce motion</span>
+        <input type="checkbox" id="set-reduce-motion" />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle-label">
+        <span>Read questions aloud</span>
+        <input type="checkbox" id="set-tts" checked />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="field-label" for="set-grade">My Grade</label>
+      <select id="set-grade" class="field-select"></select>
+      <label class="field-label">Today's Energy</label>
+      <div class="energy-row small" id="settings-energy-picker" role="group"></div>
+      <button class="btn-danger" id="btn-reset-all">🗑 Reset My Progress</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       GLOBAL: TOAST notification
+  ═══════════════════════════════════════════════ -->
+  <div id="toast" class="toast" role="status" aria-live="polite" style="display:none"></div>
+
+  <!-- ─── Scripts ─── -->
+  <script src="src/systems/save.js"></script>
+  <script src="src/systems/questions.js"></script>
+  <script src="src/systems/hope.js"></script>
+  <script src="src/systems/tts.js"></script>
+  <script src="src/characters/characters.js"></script>
+  <script src="src/engine/renderer.js"></script>
+  <script src="src/engine/platformer.js"></script>
+  <script src="src/engine/particles.js"></script>
+  <script src="src/quiz/quiz.js"></script>
+  <script src="src/screens/splash.js"></script>
+  <script src="src/screens/setup.js"></script>
+  <script src="src/screens/home.js"></script>
+  <script src="src/screens/game-screen.js"></script>
+  <script src="src/screens/tunnel.js"></script>
+  <script src="src/screens/unlock.js"></script>
+  <script src="src/screens/progress.js"></script>
+  <script src="src/screens/characters-screen.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>

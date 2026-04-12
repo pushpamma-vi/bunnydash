@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bunny Dash — Partner Access</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky: #b8e4ff;
+      --sky-d: #5bb8f5;
+      --warm: #ffd166;
+      --warm-d: #f4a261;
+      --hope: #fff7e0;
+      --text: #2d2d2d;
+      --radius: 16px;
+      --font: 'Nunito', 'Comic Sans MS', sans-serif;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background: linear-gradient(160deg, var(--sky) 0%, #e0f4ff 60%, #d4f0c4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* ── Floating clouds ── */
+    .clouds { position: fixed; top: 0; left: 0; width: 100%; pointer-events: none; z-index: 0; }
+    .cloud {
+      position: absolute;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50px;
+      animation: drift linear infinite;
+    }
+    .cloud::before, .cloud::after {
+      content: ''; position: absolute;
+      background: inherit; border-radius: 50%;
+    }
+    .c1 { width:120px; height:40px; top:8%;  left:-130px; animation-duration:28s; animation-delay:0s; }
+    .c1::before { width:60px; height:60px; top:-30px; left:15px; }
+    .c1::after  { width:50px; height:50px; top:-20px; left:50px; }
+    .c2 { width:90px;  height:30px; top:22%; left:-100px; animation-duration:38s; animation-delay:-12s; }
+    .c2::before { width:45px; height:45px; top:-22px; left:10px; }
+    .c2::after  { width:40px; height:40px; top:-18px; left:38px; }
+    .c3 { width:140px; height:44px; top:5%;  left:-150px; animation-duration:22s; animation-delay:-7s; }
+    .c3::before { width:65px; height:65px; top:-35px; left:18px; }
+    .c3::after  { width:55px; height:55px; top:-25px; left:60px; }
+    @keyframes drift { to { transform: translateX(calc(100vw + 200px)); } }
+
+    /* ── Card ── */
+    .gate-card {
+      position: relative; z-index: 1;
+      background: rgba(255,255,255,0.92);
+      border-radius: 24px;
+      padding: 40px 36px 36px;
+      max-width: 440px; width: 100%;
+      box-shadow: 0 8px 40px rgba(91,184,245,0.25), 0 2px 8px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .bunny { font-size: 72px; display: block; animation: bob 2.4s ease-in-out infinite; }
+    @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+    .title { font-size: 2rem; font-weight: 900; color: var(--text); margin: 8px 0 4px; }
+    .subtitle { font-size: 0.95rem; color: #666; margin-bottom: 28px; line-height: 1.5; }
+
+    /* approved view */
+    .approved-msg { display: none; }
+    .approved-msg .check { font-size: 56px; animation: pop 0.5s cubic-bezier(.36,.07,.19,.97); }
+    @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+    .approved-msg p { margin: 12px 0 24px; font-size: 1rem; color: #555; line-height: 1.6; }
+
+    /* form */
+    .gate-form label {
+      display: block;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .code-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1.2rem;
+      font-family: var(--font);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-align: center;
+      border: 2.5px solid var(--sky-d);
+      border-radius: var(--radius);
+      outline: none;
+      background: var(--hope);
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      text-transform: uppercase;
+    }
+    .code-input:focus { border-color: var(--warm-d); box-shadow: 0 0 0 3px rgba(244,162,97,0.3); }
+    .code-input.shake {
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97);
+      border-color: #e74c3c;
+    }
+    @keyframes shake {
+      10%,90%{transform:translateX(-3px)} 20%,80%{transform:translateX(5px)}
+      30%,50%,70%{transform:translateX(-5px)} 40%,60%{transform:translateX(5px)}
+    }
+
+    .btn-enter {
+      margin-top: 16px;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--warm), var(--warm-d));
+      color: var(--text);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1.1rem;
+      font-weight: 900;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: 0 4px 0 #c97a2a;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-enter:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #c97a2a; }
+    .btn-enter:active { transform: translateY(2px); box-shadow: 0 2px 0 #c97a2a; }
+
+    .btn-play {
+      display: inline-block;
+      padding: 16px 40px;
+      background: linear-gradient(135deg, var(--warm), var(--warm-d));
+      color: var(--text);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1.2rem;
+      font-weight: 900;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: 0 4px 0 #c97a2a;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-play:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #c97a2a; }
+
+    .error-msg {
+      display: none;
+      margin-top: 10px;
+      color: #e74c3c;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .hint-block {
+      margin-top: 28px;
+      padding: 16px;
+      background: var(--hope);
+      border-radius: 12px;
+      border: 1.5px solid #ffe08a;
+      font-size: 0.82rem;
+      color: #777;
+      line-height: 1.6;
+    }
+    .hint-block strong { color: var(--text); }
+    .hint-block a { color: var(--sky-d); font-weight: 700; text-decoration: none; }
+    .hint-block a:hover { text-decoration: underline; }
+
+    .grass {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 0;
+      height: 54px;
+      background: linear-gradient(to bottom, #7ec850 0%, #5a9e38 100%);
+      border-radius: 60% 60% 0 0 / 20px 20px 0 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="clouds" aria-hidden="true">
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+    <div class="cloud c3"></div>
+  </div>
+
+  <div class="gate-card" role="main">
+
+    <span class="bunny" aria-hidden="true">🐰</span>
+    <h1 class="title">Bunny Dash</h1>
+    <p class="subtitle">
+      A free learning adventure for children in recovery.<br>
+      <em>Built for warriors. Full of hope.</em>
+    </p>
+
+    <!-- ── Approved view (shown after valid code) ── -->
+    <div class="approved-msg" id="approved-msg" aria-live="polite">
+      <div class="check" aria-hidden="true">✅</div>
+      <p>
+        Welcome! Your organization's access has been verified.<br>
+        This device is now approved — you won't need to enter the code again.
+      </p>
+      <a class="btn-play" href="game/index.html" id="btn-play">
+        🐾 Start Playing
+      </a>
+    </div>
+
+    <!-- ── Code gate form ── -->
+    <form class="gate-form" id="gate-form" novalidate aria-label="Organization access form">
+      <label for="code-input">Organization Access Code</label>
+      <input
+        class="code-input"
+        id="code-input"
+        type="text"
+        inputmode="text"
+        maxlength="32"
+        placeholder="Enter your code"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="characters"
+        spellcheck="false"
+        aria-describedby="error-msg"
+      />
+      <div class="error-msg" id="error-msg" role="alert">
+        That code doesn't match. Please check with your organization's coordinator.
+      </div>
+      <button class="btn-enter" type="submit">Verify & Play 🐾</button>
+    </form>
+
+    <div class="hint-block">
+      <strong>For medical staff & educators:</strong><br>
+      Your hospital or organization coordinator has the access code.<br>
+      No account or internet connection is required once the game loads.<br><br>
+      <strong>Want to bring Bunny Dash to your patients?</strong><br>
+      <a href="mailto:bunnydash@example.com?subject=Partnership%20Request">Request access for your organization →</a>
+    </div>
+
+  </div>
+
+  <div class="grass" aria-hidden="true"></div>
+
+  <script>
+    // ── Access code verification ──────────────────────────────
+    // Codes are stored as SHA-256 hashes so they are not
+    // readable in plain text by inspecting the source.
+    // To add a new org code:  run in browser console:
+    //   crypto.subtle.digest('SHA-256', new TextEncoder().encode('YOURCODE'))
+    //     .then(b => console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
+    //
+    // Current approved codes (contact coordinator for the plain-text code):
+    //   HOPEHERO    — default partner code
+    //   BUNNYDASH   — general hospital/child life access
+    //   WARRIOR2026 — annual renewal code (update each year)
+
+    const VALID_HASHES = new Set([
+      // HOPEHERO
+      '49e9777255a096003c5d876e99ac2dd764e31985ee7cfc4f900c01c24466c51b',
+      // BUNNYDASH
+      'a3755082c8076ec83225f7059af93ab8d4e40afd397e58e7fa7b5138937f023f',
+      // WARRIOR2026
+      '083a57c4e00dac894dd6b85425c89c7310b45529afaa532932b01bb5f3bffcb7',
+    ]);
+
+    const STORAGE_KEY = 'bunnydash_gate_v1';
+
+    async function hashCode(raw) {
+      const encoded = new TextEncoder().encode(raw.trim().toUpperCase());
+      const buf = await crypto.subtle.digest('SHA-256', encoded);
+      return [...new Uint8Array(buf)]
+        .map(x => x.toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    function showApproved() {
+      document.getElementById('gate-form').style.display = 'none';
+      const msg = document.getElementById('approved-msg');
+      msg.style.display = 'block';
+    }
+
+    // Auto-pass if this device was already approved
+    if (localStorage.getItem(STORAGE_KEY) === 'approved') {
+      // Brief welcome back before redirect
+      showApproved();
+    }
+
+    document.getElementById('gate-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const input = document.getElementById('code-input');
+      const errEl = document.getElementById('error-msg');
+      const raw   = input.value.trim();
+
+      if (!raw) { input.focus(); return; }
+
+      const hash = await hashCode(raw);
+
+      if (VALID_HASHES.has(hash)) {
+        localStorage.setItem(STORAGE_KEY, 'approved');
+        errEl.style.display = 'none';
+        input.classList.remove('shake');
+        showApproved();
+      } else {
+        input.classList.remove('shake');
+        // Force reflow to re-trigger shake
+        void input.offsetWidth;
+        input.classList.add('shake');
+        errEl.style.display = 'block';
+        input.select();
+      }
+    });
+
+    // Remove shake class after animation ends
+    document.getElementById('code-input').addEventListener('animationend', function() {
+      this.classList.remove('shake');
+    });
+  </script>
+
+</body>
+</html>
