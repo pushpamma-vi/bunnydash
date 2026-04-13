@@ -249,7 +249,7 @@
     // ── Access code verification ─────────────────────────────
     // Seed hashes are always valid (admin + legacy partner codes).
     // Dynamic hashes for approved orgs are fetched from Netlify Blob
-    // via /.netlify/functions/get-codes at page load.
+    // via /api/get-codes at page load.
 
     // Seed hashes (hardcoded fallback — always accepted)
     const SEED_HASHES = [
@@ -269,7 +269,7 @@
     let VALID_HASHES = new Set(SEED_HASHES);
 
     // Fetch dynamic hashes from Netlify function (non-blocking)
-    fetch('/.netlify/functions/get-codes')
+    fetch('/api/get-codes')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data && Array.isArray(data.hashes)) {

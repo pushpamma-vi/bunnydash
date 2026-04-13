@@ -1,0 +1,15 @@
+name = "bunnybrave"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "."
+
+# ── Cloudflare KV namespace ─────────────────────────────────────
+# Setup steps (one-time, in Cloudflare dashboard):
+#   1. Go to Workers & Pages → KV → Create namespace → name it "BUNNYBRAVE_KV"
+#   2. Copy the Namespace ID and paste it below as `id`
+#   3. For `preview_id`, create a second namespace called "BUNNYBRAVE_KV_PREVIEW"
+#      (used for local dev with `wrangler pages dev`)
+# ────────────────────────────────────────────────────────────────
+[[kv_namespaces]]
+binding    = "BUNNYBRAVE_KV"
+id         = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_YOUR_KV_NAMESPACE_PREVIEW_ID"

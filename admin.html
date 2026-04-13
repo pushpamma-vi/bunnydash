@@ -606,7 +606,7 @@
       if (!key) { if (loadEl) loadEl.style.display = 'none'; return; }
 
       try {
-        const res  = await fetch('/.netlify/functions/get-requests', {
+        const res  = await fetch('/api/get-requests', {
           headers: { 'X-Admin-Key': key },
         });
         if (res.status === 401) {
@@ -680,7 +680,7 @@
       if (btn) { btn.disabled = true; btn.textContent = 'Approving…'; }
 
       try {
-        const res  = await fetch('/.netlify/functions/approve-request', {
+        const res  = await fetch('/api/approve-request', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
           body: JSON.stringify({ requestId }),
@@ -940,7 +940,7 @@
 
       let codes = [];
       try {
-        const res = await fetch('/.netlify/functions/get-approved-codes', {
+        const res = await fetch('/api/get-approved-codes', {
           headers: { 'X-Admin-Key': key },
         });
         if (res.status === 401) {
@@ -987,7 +987,7 @@
       const key = getAdminKey();
       if (!key) return;
       try {
-        const res = await fetch('/.netlify/functions/revoke-code', {
+        const res = await fetch('/api/revoke-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
           body: JSON.stringify({ hash }),
@@ -1028,7 +1028,7 @@
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Activating…'; }
 
       try {
-        const res = await fetch('/.netlify/functions/add-code', {
+        const res = await fetch('/api/add-code', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
           body:    JSON.stringify({ orgName, code }),
