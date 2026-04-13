@@ -105,30 +105,24 @@ const Platformer = (() => {
       // ── Elevation: path-walker so height variation ACCUMULATES ─
       let dy = 0;
       if (climbSteps > 0) {
-        // Forced climb upward — each step requires a full jump
-        const rise = cfg.heightStep > 0
-          ? cfg.heightStep * (0.75 + Math.random() * 0.45)
-          : 35;
-        dy = -rise;
+        // Forced staircase climb — exactly heightStep upward every step
+        dy = -(cfg.heightStep * (0.85 + Math.random() * 0.28));
         climbSteps--;
         if (climbSteps === 0) descentSteps = 3;
       } else if (descentSteps > 0) {
-        // Gentle descent after the climb
-        const drop = cfg.heightStep > 0
-          ? cfg.heightStep * (0.4 + Math.random() * 0.35)
-          : 18;
-        dy = drop;
+        // Controlled descent after climb (half-speed down)
+        dy = cfg.heightStep * (0.42 + Math.random() * 0.22);
         descentSteps--;
       } else {
-        // Free random walk — variance grows with level
-        dy = (Math.random() * 2 - 1) * cfg.heightStep;
+        // Free organic walk — uses heightVar (SMALLER than heightStep)
+        dy = (Math.random() * 2 - 1) * cfg.heightVar;
 
         // Trigger a scheduled climb section?
         if (
           climbTriggerIdx < climbTriggers.length &&
           px >= climbTriggers[climbTriggerIdx]
         ) {
-          climbSteps = 3 + Math.floor(Math.random() * 2); // 3-4 upward steps
+          climbSteps = 3; // 3 consecutive upward steps = clear staircase
           climbTriggerIdx++;
         }
       }
@@ -219,37 +213,51 @@ const Platformer = (() => {
   }
 
   /* ── Per-level difficulty config ─────────────────────────────
-     Every single level has distinct parameters so L1 vs L2 is
-     immediately visible:
-       L1 → perfectly flat, wide platforms, walkable gaps, no movers
-       L2 → first height variation + one forced climb sequence
-       L3 → first moving platform, wider gaps
-       L5 → vertical camera kicks in
-       L8 → blinking (disappearing) platforms introduced
-       L10+ → all elements active at increasing intensity
+     Explicit lookup table so every single level is deliberately
+     designed. Formula-based scaling was too gradual to feel.
+
+     Physics reference (for tuning):
+       BASE_JUMP=-11, GRAVITY=0.45, BASE_SPEED=3.6
+       Max horizontal range ≈ 176px  |  Max jump height ≈ 134px
+       Gap 30px → walkable  |  90px → easy jump  |  165px → hard
   ──────────────────────────────────────────────────────────── */
   function _levelConfig(level) {
-    const S = Math.max(0, Math.min(level - 1, 30)); // cap scaling at L31
+    //         gap   platW  hVar  hStep  mov   blink cls  vc
+    const T = [
+      null, //  0  (1-indexed)
+      [ 28,  190,   0,   0,  0.00, 0.00,  0, false], // L1  FLAT TUTORIAL  — walk right, no skill needed
+      [ 88,  148,  20,  40,  0.00, 0.00,  1, false], // L2  first real jumps + one staircase climb
+      [108,  128,  28,  45,  0.12, 0.00,  1, false], // L3  first moving platform
+      [124,  110,  36,  50,  0.18, 0.00,  2, false], // L4  two climbs, wider gaps
+      [138,   96,  43,  54,  0.22, 0.00,  2, true ], // L5  vertical camera ON
+      [148,   85,  49,  57,  0.26, 0.08,  3, true ], // L6  first blinking platform
+      [156,   75,  54,  60,  0.29, 0.14,  3, true ], // L7
+      [163,   66,  58,  63,  0.32, 0.18,  4, true ], // L8
+      [168,   58,  62,  65,  0.35, 0.21,  4, true ], // L9
+      [173,   51,  65,  67,  0.37, 0.24,  5, true ], // L10
+      [177,   45,  68,  69,  0.39, 0.26,  5, true ], // L11
+      [180,   40,  71,  71,  0.41, 0.28,  6, true ], // L12
+      [183,   35,  73,  73,  0.43, 0.30,  6, true ], // L13
+      [185,   31,  75,  74,  0.44, 0.31,  6, true ], // L14
+      [187,   28,  77,  75,  0.45, 0.32,  7, true ], // L15
+    ];
+
+    const idx = Math.min(level, T.length - 1);
+    const r   = T[idx];
+    const excess = Math.max(0, level - (T.length - 1));
     return {
-      // Platform width: 165px at L1, −6px per level, floor 28px
-      platWidth:     Math.max(28,  165 - S * 6),
-      platWidthVar:  14,
-      // Gap: 42px at L1 (nearly walkable), +12px per level, cap 220px
-      gapMin:        Math.min(220, 42  + S * 12),
-      gapVar:        Math.min(55,  14  + S * 2),
-      // Height step: ZERO at L1 (dead flat!), 20px at L2, +7/level, cap 105
-      heightStep:    S === 0 ? 0 : Math.min(105, 20 + (S - 1) * 7),
-      // Moving platforms: none for L1-2, chance grows from L3
-      movingChance:  S < 2 ? 0 : Math.min(0.52, (S - 2) * 0.055),
-      moveSpeed:     0.013 + S * 0.0012,
-      // Blinking platforms: none until L8
-      blinkChance:   S < 7 ? 0 : Math.min(0.28, (S - 7) * 0.04),
-      // Climb sections: none at L1, 1 at L2, grows every 2 levels
-      climbSections: S === 0 ? 0 : Math.min(6, 1 + Math.floor((S - 1) / 2)),
-      // Vertical camera: from L5 onwards
-      verticalCamera: level >= 5,
-      // Level length grows slightly each level
-      levelWidth:    2100 + level * 95,
+      gapMin:        Math.min(210, r[0] + excess * 1.5),
+      gapVar:        36,
+      platWidth:     Math.max(24,  r[1] - excess),
+      platWidthVar:  10,
+      heightVar:     Math.min(85,  r[2] + excess * 0.5), // free-walk step (organic terrain)
+      heightStep:    Math.min(88,  r[3] + excess * 0.5), // forced climb step (staircase)
+      movingChance:  Math.min(0.55, r[4] + excess * 0.008),
+      moveSpeed:     0.013 + level * 0.001,
+      blinkChance:   Math.min(0.40, r[5] + excess * 0.008),
+      climbSections: Math.min(8, r[6]),
+      verticalCamera: r[7],
+      levelWidth:    2000 + level * 90,
     };
   }
 
