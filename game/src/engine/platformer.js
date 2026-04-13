@@ -29,6 +29,7 @@ const Platformer = (() => {
   let _onFall     = null;
   let _levelDone  = false;   // guard: fire onComplete only once
   let _fellRecently = false; // guard: fire onFall only once per fall
+  let _fallFrames   = 0;     // counts frames player is airborne+falling
 
   // Player state
   const player = {
@@ -501,11 +502,24 @@ const Platformer = (() => {
   /* ── Fall detection ──────────────────────────────────────────── */
   function _checkFall() {
     if (_levelDone || _fellRecently) return;
-    // Fixed world-Y threshold: if the player's feet go more than 220px
-    // below the lowest safe ground (GROUND_Y=340), it's a fall.
-    // This is camera-independent — the camera chasing the player
-    // cannot mask the fall.
-    if (player.y > 340 + 220) {
+
+    if (player.onGround) {
+      // Landed — reset the fall counter
+      _fallFrames = 0;
+      return;
+    }
+
+    // Accumulate frames where the player is airborne AND falling downward
+    if (player.vy > 2) {
+      _fallFrames++;
+    } else {
+      // Rising (jump) — don't count against the player
+      _fallFrames = Math.max(0, _fallFrames - 1);
+    }
+
+    // ~1.3 s of downward freefall (≈78 frames @ 60 fps) == fallen off
+    if (_fallFrames > 78) {
+      _fallFrames  = 0;
       _fellRecently = true;
       setTimeout(() => { _fellRecently = false; }, 2200);
       if (_onFall) _onFall();
@@ -818,6 +832,7 @@ const Platformer = (() => {
     _frame        = 0;
     _levelDone    = false;   // reset for new level
     _fellRecently = false;   // reset for new level
+    _fallFrames   = 0;       // reset fall timer
     _starsCollected = 0;     // reset star count
 
     _generateLevel(level);
