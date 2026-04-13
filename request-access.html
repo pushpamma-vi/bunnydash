@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request Access — Bunny Dash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple:   #7c3aed;
+      --purple-l: #a78bfa;
+      --purple-d: #5b21b6;
+      --sky:    #b8e4ff;
+      --warm:   #ffd166;
+      --warm-d: #f4a261;
+      --text:   #2d2d2d;
+      --muted:  #6b7280;
+      --bg:     linear-gradient(160deg, #b8e4ff 0%, #e0f4ff 60%, #d4f0c4 100%);
+      --card:   rgba(255,255,255,0.93);
+      --radius: 16px;
+      --font:   'Nunito', 'Comic Sans MS', sans-serif;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+
+    .clouds { position: fixed; top: 0; left: 0; width: 100%; pointer-events: none; z-index: 0; }
+    .cloud { position: absolute; background: rgba(255,255,255,0.8); border-radius: 50px; animation: drift linear infinite; }
+    .cloud::before, .cloud::after { content:''; position:absolute; background:inherit; border-radius:50%; }
+    .c1 { width:120px; height:40px; top:8%;  left:-130px; animation-duration:28s; }
+    .c1::before { width:60px; height:60px; top:-30px; left:15px; }
+    .c1::after  { width:50px; height:50px; top:-20px; left:50px; }
+    .c2 { width:90px;  height:30px; top:22%; left:-100px; animation-duration:38s; animation-delay:-12s; }
+    .c2::before { width:45px; height:45px; top:-22px; left:10px; }
+    .c2::after  { width:40px; height:40px; top:-18px; left:38px; }
+    @keyframes drift { to { transform: translateX(calc(100vw + 200px)); } }
+
+    .card {
+      position: relative; z-index: 1;
+      background: var(--card);
+      border-radius: 24px;
+      padding: 40px 36px 36px;
+      max-width: 520px; width: 100%;
+      box-shadow: 0 8px 40px rgba(91,184,245,0.25), 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .logo { text-align: center; font-size: 56px; animation: bob 2.4s ease-in-out infinite; }
+    @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    h1 { text-align: center; font-size: 1.7rem; font-weight: 900; margin: 8px 0 4px; }
+    .subtitle { text-align: center; font-size: 0.9rem; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block; font-weight: 700; font-size: 0.88rem;
+      margin-bottom: 6px; color: var(--text);
+    }
+    .field label .req { color: var(--purple); }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 12px 14px;
+      font-size: 1rem; font-family: var(--font);
+      border: 2.5px solid #d1d5db; border-radius: var(--radius);
+      background: #f9fafb; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--purple-l);
+      box-shadow: 0 0 0 3px rgba(167,139,250,0.25);
+    }
+    .field textarea { resize: vertical; min-height: 90px; }
+
+    .field-row { display: flex; gap: 14px; }
+    .field-row .field { flex: 1; }
+
+    .btn-submit {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--purple), var(--purple-d));
+      color: #fff; border: none; border-radius: var(--radius);
+      font-size: 1.1rem; font-weight: 900; font-family: var(--font);
+      cursor: pointer; box-shadow: 0 4px 0 var(--purple-d);
+      transition: transform 0.15s, box-shadow 0.15s;
+      margin-top: 8px;
+    }
+    .btn-submit:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 var(--purple-d); }
+    .btn-submit:active { transform: translateY(2px);  box-shadow: 0 2px 0 var(--purple-d); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .msg {
+      display: none; margin-top: 14px; padding: 12px 16px;
+      border-radius: 10px; font-size: 0.9rem; font-weight: 700;
+      text-align: center;
+    }
+    .msg.success { background: #d1fae5; color: #065f46; }
+    .msg.error   { background: #fee2e2; color: #991b1b; }
+
+    /* Success state */
+    .success-view { display: none; text-align: center; padding: 20px 0; }
+    .success-view .big { font-size: 64px; animation: pop 0.5s cubic-bezier(.36,.07,.19,.97); }
+    @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+    .success-view h2 { font-size: 1.4rem; margin: 12px 0 8px; }
+    .success-view p { color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+
+    .back-link {
+      display: block; text-align: center; margin-top: 20px;
+      color: var(--purple); font-weight: 700;
+      font-size: 0.9rem; text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .grass {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 0;
+      height: 54px;
+      background: linear-gradient(to bottom, #7ec850 0%, #5a9e38 100%);
+      border-radius: 60% 60% 0 0 / 20px 20px 0 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="clouds" aria-hidden="true">
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+  </div>
+
+  <div class="card" role="main">
+    <div class="logo" aria-hidden="true">🐰</div>
+    <h1>Request Access</h1>
+    <p class="subtitle">
+      Bunny Dash is free for hospitals, clinics, and child life organizations.<br>
+      Fill in the form and we'll send your access code within 24 hours.
+    </p>
+
+    <!-- Request form -->
+    <form id="request-form" novalidate>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-org">Organization Name <span class="req">*</span></label>
+          <input type="text" id="f-org" placeholder="e.g. St. Mary's Children's Hospital" maxlength="200" autocomplete="organization" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-name">Your Name <span class="req">*</span></label>
+          <input type="text" id="f-name" placeholder="First and last name" maxlength="100" autocomplete="name" />
+        </div>
+        <div class="field">
+          <label for="f-role">Your Role</label>
+          <input type="text" id="f-role" placeholder="e.g. Child Life Specialist" maxlength="100" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-email">Email Address <span class="req">*</span></label>
+        <input type="email" id="f-email" placeholder="you@organization.org" maxlength="200" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="f-message">Tell us about your use case <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+        <textarea id="f-message" placeholder="How many children will use this? Any special needs to be aware of?" maxlength="1000"></textarea>
+      </div>
+
+      <button class="btn-submit" type="submit" id="btn-submit">
+        Send Request 🐾
+      </button>
+      <div class="msg" id="form-msg"></div>
+    </form>
+
+    <!-- Success state (replaces form) -->
+    <div class="success-view" id="success-view">
+      <div class="big">📬</div>
+      <h2>Request received!</h2>
+      <p>
+        Thanks, <strong id="sv-name"></strong>!<br>
+        We'll review your request and email your access code to<br>
+        <strong id="sv-email"></strong> within 24 hours.
+      </p>
+    </div>
+
+    <a class="back-link" href="index.html">← Back to Bunny Dash</a>
+  </div>
+
+  <div class="grass" aria-hidden="true"></div>
+
+  <script>
+    document.getElementById('request-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn    = document.getElementById('btn-submit');
+      const msgEl  = document.getElementById('form-msg');
+      const org    = document.getElementById('f-org').value.trim();
+      const name   = document.getElementById('f-name').value.trim();
+      const role   = document.getElementById('f-role').value.trim();
+      const email  = document.getElementById('f-email').value.trim();
+      const msg    = document.getElementById('f-message').value.trim();
+
+      // Client-side validation
+      if (!org)   { showMsg('Please enter your organization name.', 'error'); return; }
+      if (!name)  { showMsg('Please enter your name.', 'error'); return; }
+      if (!email) { showMsg('Please enter your email address.', 'error'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showMsg('Please enter a valid email address.', 'error'); return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      hideMsg();
+
+      try {
+        const res = await fetch('/.netlify/functions/submit-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orgName: org, contactName: name, role, email, message: msg }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          document.getElementById('request-form').style.display = 'none';
+          document.getElementById('sv-name').textContent  = name;
+          document.getElementById('sv-email').textContent = email;
+          document.getElementById('success-view').style.display = 'block';
+        } else {
+          showMsg(data.error || 'Something went wrong. Please try again.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Send Request 🐾';
+        }
+      } catch {
+        showMsg('Network error — please check your connection and try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Send Request 🐾';
+      }
+    });
+
+    function showMsg(text, type) {
+      const el = document.getElementById('form-msg');
+      el.textContent = text;
+      el.className = `msg ${type}`;
+      el.style.display = 'block';
+    }
+    function hideMsg() {
+      const el = document.getElementById('form-msg');
+      el.style.display = 'none';
+    }
+  </script>
+</body>
+</html>

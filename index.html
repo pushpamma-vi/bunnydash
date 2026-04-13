@@ -238,7 +238,7 @@
       Your hospital or organization coordinator has the access code.<br>
       No account or internet connection is required once the game loads.<br><br>
       <strong>Want to bring Bunny Dash to your patients?</strong><br>
-      <a href="mailto:bunnydash@example.com?subject=Partnership%20Request">Request access for your organization →</a>
+      <a href="request-access.html">Request access for your organization →</a>
     </div>
 
   </div>
@@ -246,32 +246,37 @@
   <div class="grass" aria-hidden="true"></div>
 
   <script>
-    // ── Access code verification ──────────────────────────────
-    // Codes are stored as SHA-256 hashes so they are not
-    // readable in plain text by inspecting the source.
-    // To add a new org code:  run in browser console:
-    //   crypto.subtle.digest('SHA-256', new TextEncoder().encode('YOURCODE'))
-    //     .then(b => console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
-    //
-    // Current approved codes (contact coordinator for the plain-text code):
-    //   HOPEHERO    — default partner code
-    //   BUNNYDASH   — general hospital/child life access
-    //   WARRIOR2026 — annual renewal code (update each year)
+    // ── Access code verification ─────────────────────────────
+    // Seed hashes are always valid (admin + legacy partner codes).
+    // Dynamic hashes for approved orgs are fetched from Netlify Blob
+    // via /.netlify/functions/get-codes at page load.
 
-    const VALID_HASHES = new Set([
+    // Seed hashes (hardcoded fallback — always accepted)
+    const SEED_HASHES = [
       // HOPEHERO
       '49e9777255a096003c5d876e99ac2dd764e31985ee7cfc4f900c01c24466c51b',
       // BUNNYDASH
       'a3755082c8076ec83225f7059af93ab8d4e40afd397e58e7fa7b5138937f023f',
       // WARRIOR2026
       '083a57c4e00dac894dd6b85425c89c7310b45529afaa532932b01bb5f3bffcb7',
-      // ADMINBDASH2026 — admin access (never share with patients)
+      // ADMINBDASH2026 — admin (never share with patients)
       '101e2d6eaecdc368edf8727ac03ad7a56f9086648e04576ca35cd55d7f56a619',
-    ]);
-
-    const ADMIN_HASH = '101e2d6eaecdc368edf8727ac03ad7a56f9086648e04576ca35cd55d7f56a619';
-
+    ];
+    const ADMIN_HASH  = '101e2d6eaecdc368edf8727ac03ad7a56f9086648e04576ca35cd55d7f56a619';
     const STORAGE_KEY = 'bunnydash_gate_v1';
+
+    // Holds all valid hashes (seed + dynamically loaded)
+    let VALID_HASHES = new Set(SEED_HASHES);
+
+    // Fetch dynamic hashes from Netlify function (non-blocking)
+    fetch('/.netlify/functions/get-codes')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && Array.isArray(data.hashes)) {
+          data.hashes.forEach(h => VALID_HASHES.add(h));
+        }
+      })
+      .catch(() => { /* offline — seed hashes still work */ });
 
     async function hashCode(raw) {
       const encoded = new TextEncoder().encode(raw.trim().toUpperCase());

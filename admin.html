@@ -222,6 +222,30 @@
       border-radius: 10px; padding: 12px 16px;
       font-size: 0.85rem; color: #713f12; margin-bottom: 16px;
     }
+
+    /* ── Requests table ── */
+    .req-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .req-table th {
+      text-align: left; padding: 8px 12px;
+      background: var(--bg); color: var(--muted); font-size: 0.78rem; font-weight: 700;
+    }
+    .req-table td { padding: 10px 12px; border-top: 1px solid #f3f4f6; vertical-align: top; }
+    .req-table tr:hover td { background: #faf5ff; }
+    .badge-status {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 700;
+    }
+    .badge-status.pending  { background: #fef9c3; color: #92400e; }
+    .badge-status.approved { background: #d1fae5; color: #065f46; }
+    .badge-status.denied   { background: #fee2e2; color: #991b1b; }
+    .req-code-chip {
+      font-family: monospace; font-size: 0.85rem; background: var(--bg);
+      padding: 4px 10px; border-radius: 8px; color: var(--purple);
+      display: inline-block; margin-top: 4px;
+    }
+    #req-loading { color: var(--muted); font-size: 0.9rem; padding: 20px 0; text-align: center; }
+    #req-empty   { color: var(--muted); font-size: 0.9rem; padding: 20px 0; text-align: center; display: none; }
+    .req-meta { font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
   </style>
 </head>
 <body>
@@ -250,6 +274,7 @@
 
       <div class="tabs">
         <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="tab-btn" data-tab="requests">📩 Access Requests <span id="req-badge" style="display:none;background:#ef4444;color:#fff;border-radius:12px;padding:1px 7px;font-size:0.75rem;margin-left:4px;"></span></button>
         <button class="tab-btn" data-tab="player">👤 Player Data</button>
         <button class="tab-btn" data-tab="level">🎮 Level Control</button>
         <button class="tab-btn" data-tab="codes">🔑 Org Codes</button>
@@ -277,7 +302,35 @@
         </div>
       </div>
 
-      <!-- ─── PLAYER DATA ───────────────────────────────────── -->
+      <!-- ─── ACCESS REQUESTS ────────────────────────────────── -->
+      <div class="tab-panel" id="tab-requests">
+        <div class="card">
+          <h2>📬 Organization Access Requests</h2>
+          <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="loadRequests()">🔄 Refresh</button>
+            <span id="req-summary" style="font-size:0.85rem;color:var(--muted);"></span>
+          </div>
+          <div id="req-loading">Loading requests…</div>
+          <div id="req-empty">No requests yet. They'll appear here when organizations submit the form.</div>
+          <div style="overflow-x:auto;">
+            <table class="req-table" id="req-table" style="display:none;">
+              <thead>
+                <tr>
+                  <th>Organization</th>
+                  <th>Contact</th>
+                  <th>Email</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="req-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── PLAYER DATA ─────────────────────────────────── -->
       <div class="tab-panel" id="tab-player">
         <div class="card">
           <h2>👤 Full Save Data (localStorage)</h2>
@@ -449,6 +502,7 @@
         if (btn.dataset.tab === 'level')     refreshLevelTab();
         if (btn.dataset.tab === 'codes')     renderCodesTab();
         if (btn.dataset.tab === 'dashboard') renderDashboard();
+        if (btn.dataset.tab === 'requests')  loadRequests();
       });
     });
 
@@ -456,6 +510,135 @@
     function initAdmin() {
       renderDashboard();
       renderCodesTab();
+      loadRequests(); // load in background so badge shows on first open
+    }
+
+    /* ════════════════════════════════════════════════════════
+       ACCESS REQUESTS
+    ════════════════════════════════════════════════════════ */
+    let _requests = [];
+    const _adminKey = localStorage.getItem('bunnydash_admin_key') || '';
+
+    // Persist admin API key in localStorage so we don't ask every time
+    function getAdminKey() {
+      let k = localStorage.getItem('bunnydash_admin_key') || '';
+      if (!k) {
+        k = prompt('Enter your Admin Secret key (set in Netlify env ADMIN_SECRET):') || '';
+        if (k) localStorage.setItem('bunnydash_admin_key', k);
+      }
+      return k;
+    }
+
+    async function loadRequests() {
+      const loadEl   = document.getElementById('req-loading');
+      const emptyEl  = document.getElementById('req-empty');
+      const tableEl  = document.getElementById('req-table');
+      if (loadEl)  loadEl.style.display = 'block';
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (tableEl) tableEl.style.display = 'none';
+
+      const key = getAdminKey();
+      if (!key) { if (loadEl) loadEl.style.display = 'none'; return; }
+
+      try {
+        const res  = await fetch('/.netlify/functions/get-requests', {
+          headers: { 'X-Admin-Key': key },
+        });
+        if (res.status === 401) {
+          localStorage.removeItem('bunnydash_admin_key');
+          toast('❌ Wrong admin key — please try again.');
+          if (loadEl) loadEl.style.display = 'none';
+          return;
+        }
+        const data = await res.json();
+        _requests  = Array.isArray(data) ? data : [];
+      } catch {
+        toast('❌ Could not load requests — are you on Netlify?');
+        if (loadEl) loadEl.style.display = 'none';
+        return;
+      }
+
+      if (loadEl) loadEl.style.display = 'none';
+      renderRequestsTable();
+    }
+
+    function renderRequestsTable() {
+      const emptyEl  = document.getElementById('req-empty');
+      const tableEl  = document.getElementById('req-table');
+      const tbody    = document.getElementById('req-tbody');
+      const summary  = document.getElementById('req-summary');
+      const badge    = document.getElementById('req-badge');
+
+      const pending  = _requests.filter(r => r.status === 'pending').length;
+
+      // Update badge on tab
+      if (badge) {
+        badge.textContent  = pending;
+        badge.style.display = pending > 0 ? 'inline' : 'none';
+      }
+      if (summary) {
+        summary.textContent = `${_requests.length} total • ${pending} pending • ${_requests.filter(r=>r.status==='approved').length} approved`;
+      }
+
+      if (_requests.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        if (tableEl) tableEl.style.display = 'none';
+        return;
+      }
+
+      if (tableEl) tableEl.style.display = 'table';
+
+      tbody.innerHTML = _requests.map(r => {
+        const date = new Date(r.submittedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+        const actionBtn = r.status === 'pending'
+          ? `<button class="btn btn-green btn-sm" onclick="approveRequest('${_esc(r.id)}')">Approve &amp; Send Code</button>`
+          : r.status === 'approved'
+            ? `<div class="req-code-chip">${_esc(r.approvedCode || '—')}</div>`
+            : `<span style="color:var(--muted)">Denied</span>`;
+
+        return `<tr id="req-row-${_esc(r.id)}">
+          <td><strong>${_esc(r.orgName)}</strong></td>
+          <td>${_esc(r.contactName)}<div class="req-meta">${_esc(r.role||'')}</div></td>
+          <td><a href="mailto:${_esc(r.email)}" style="color:var(--purple)">${_esc(r.email)}</a></td>
+          <td>${date}</td>
+          <td><span class="badge-status ${r.status}">${r.status}</span></td>
+          <td>${actionBtn}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function approveRequest(requestId) {
+      const key = getAdminKey();
+      if (!key) return;
+
+      const btn = document.querySelector(`#req-row-${requestId} .btn-green`);
+      if (btn) { btn.disabled = true; btn.textContent = 'Approving…'; }
+
+      try {
+        const res  = await fetch('/.netlify/functions/approve-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
+          body: JSON.stringify({ requestId }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          toast(`✅ Approved! Code ${data.code} sent by email.`);
+          // Update local state
+          const idx = _requests.findIndex(r => r.id === requestId);
+          if (idx !== -1) {
+            _requests[idx].status       = 'approved';
+            _requests[idx].approvedCode = data.code;
+          }
+          renderRequestsTable();
+        } else {
+          toast('❌ ' + (data.error || 'Approval failed'));
+          if (btn) { btn.disabled = false; btn.textContent = 'Approve & Send Code'; }
+        }
+      } catch {
+        toast('❌ Network error during approval.');
+        if (btn) { btn.disabled = false; btn.textContent = 'Approve & Send Code'; }
+      }
     }
 
     /* ════════════════════════════════════════════════════════
