@@ -408,11 +408,34 @@
 
       <!-- ─── ORG CODES ─────────────────────────────────────── -->
       <div class="tab-panel" id="tab-codes">
+
+        <!-- Approved orgs (dynamic, from blob store) -->
         <div class="card">
-          <h2>🔑 Registered Org Codes</h2>
+          <h2>✅ Approved Org Codes <span id="approved-count" style="font-size:0.8rem;color:var(--muted);font-weight:400;margin-left:8px;"></span></h2>
           <p style="font-size:0.85rem; color:var(--muted); margin-bottom:16px;">
-            These hashes are hard-coded in <code>index.html</code> and <code>manage-codes.js</code>.
-            To add a new code, generate it below and paste the hash into both files.
+            Codes approved via the Access Requests flow. Revoking removes access immediately — no redeploy needed.
+          </p>
+          <div id="approved-loading" style="color:var(--muted);font-size:0.9rem;margin-bottom:12px;">Loading…</div>
+          <div id="approved-empty"   style="display:none;color:var(--muted);font-size:0.9rem;margin-bottom:12px;">No approved org codes yet.</div>
+          <table class="codes-table" id="approved-table" style="display:none;">
+            <thead>
+              <tr>
+                <th>Organization</th>
+                <th>SHA-256 Hash</th>
+                <th>Approved</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="approved-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Seed / hardcoded codes -->
+        <div class="card">
+          <h2>🔑 Seed Org Codes</h2>
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:16px;">
+            These hashes are hard-coded in <code>index.html</code>.
+            To add a new permanent code, generate it below and paste the hash into the source file.
           </p>
           <table class="codes-table">
             <thead>
@@ -500,7 +523,7 @@
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
         if (btn.dataset.tab === 'player')    refreshPlayerTab();
         if (btn.dataset.tab === 'level')     refreshLevelTab();
-        if (btn.dataset.tab === 'codes')     renderCodesTab();
+        if (btn.dataset.tab === 'codes')     { renderCodesTab(); loadApprovedCodes(); }
         if (btn.dataset.tab === 'dashboard') renderDashboard();
         if (btn.dataset.tab === 'requests')  loadRequests();
       });
@@ -510,6 +533,7 @@
     function initAdmin() {
       renderDashboard();
       renderCodesTab();
+      loadApprovedCodes();
       loadRequests(); // load in background so badge shows on first open
     }
 
@@ -858,6 +882,93 @@
           <td>${_esc(c.role)}</td>
         </tr>`
       ).join('');
+    }
+
+    async function loadApprovedCodes() {
+      const loadEl  = document.getElementById('approved-loading');
+      const emptyEl = document.getElementById('approved-empty');
+      const tableEl = document.getElementById('approved-table');
+      const tbody   = document.getElementById('approved-tbody');
+      const countEl = document.getElementById('approved-count');
+      if (loadEl)  loadEl.style.display = 'block';
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (tableEl) tableEl.style.display = 'none';
+
+      const key = getAdminKey();
+      if (!key) { if (loadEl) loadEl.style.display = 'none'; return; }
+
+      let codes = [];
+      try {
+        const res = await fetch('/.netlify/functions/get-approved-codes', {
+          headers: { 'X-Admin-Key': key },
+        });
+        if (res.status === 401) {
+          localStorage.removeItem('bunnybrave_admin_key');
+          toast('❌ Wrong admin key — please try again.');
+          if (loadEl) loadEl.style.display = 'none';
+          return;
+        }
+        const data = await res.json();
+        codes = Array.isArray(data) ? data : [];
+      } catch {
+        toast('❌ Could not load approved codes.');
+        if (loadEl) loadEl.style.display = 'none';
+        return;
+      }
+
+      if (loadEl) loadEl.style.display = 'none';
+      if (countEl) countEl.textContent = codes.length ? `(${codes.length})` : '';
+
+      if (!codes.length) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+
+      tbody.innerHTML = codes.map(c => {
+        const date = c.approvedAt ? new Date(c.approvedAt).toLocaleDateString() : '—';
+        return `<tr id="approved-row-${_esc(c.hash.slice(0,16))}">
+          <td><strong>${_esc(c.orgName)}</strong></td>
+          <td><span class="hash-mono">${_esc(c.hash)}</span></td>
+          <td>${date}</td>
+          <td>
+            <button class="btn btn-sm" style="background:#ef4444;color:#fff;"
+              onclick="revokeCode('${_esc(c.hash)}', '${_esc(c.orgName)}')">
+              🚫 Revoke
+            </button>
+          </td>
+        </tr>`;
+      }).join('');
+      if (tableEl) tableEl.style.display = 'table';
+    }
+
+    async function revokeCode(hash, orgName) {
+      if (!confirm(`Revoke access for "${orgName}"?\n\nThey will be locked out immediately.`)) return;
+      const key = getAdminKey();
+      if (!key) return;
+      try {
+        const res = await fetch('/.netlify/functions/revoke-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
+          body: JSON.stringify({ hash }),
+        });
+        const data = await res.json();
+        if (!res.ok) { toast(`❌ ${data.error || 'Revoke failed'}`); return; }
+        toast(`🚫 Access revoked for ${orgName}`);
+        // Remove row from table immediately
+        const row = document.getElementById('approved-row-' + hash.slice(0,16));
+        if (row) row.remove();
+        // Update count
+        const countEl = document.getElementById('approved-count');
+        const tbody   = document.getElementById('approved-tbody');
+        const remaining = tbody ? tbody.querySelectorAll('tr').length : 0;
+        if (countEl) countEl.textContent = remaining ? `(${remaining})` : '';
+        if (!remaining) {
+          document.getElementById('approved-empty').style.display = 'block';
+          document.getElementById('approved-table').style.display = 'none';
+        }
+      } catch {
+        toast('❌ Network error — revoke failed.');
+      }
     }
 
     async function generateHash() {
