@@ -89,15 +89,44 @@
       <button class="icon-btn" id="btn-settings" aria-label="Settings">⚙️</button>
     </div>
 
+    <!-- Floating stars decoration -->
+    <div class="home-stars" aria-hidden="true">
+      <span class="fstar s1">⭐</span><span class="fstar s2">🌟</span>
+      <span class="fstar s3">✨</span><span class="fstar s4">⭐</span>
+      <span class="fstar s5">🌟</span>
+    </div>
+
     <div class="home-character-stage">
       <div class="home-bunny-display">
         <canvas id="home-bunny-canvas" width="200" height="200" aria-label="Your bunny character"></canvas>
         <div class="home-bunny-name" id="home-bunny-name">Fluff</div>
       </div>
       <div class="home-stats">
-        <div class="stat-chip">🌟 <span id="stat-stars">0</span> Stars</div>
-        <div class="stat-chip">📚 Level <span id="stat-level">1</span></div>
-        <div class="stat-chip">✅ <span id="stat-correct">0</span> Answers</div>
+        <div class="stat-chip chip-stars">🌟 <span id="stat-stars">0</span> Stars</div>
+        <div class="stat-chip chip-level">📚 Level <span id="stat-level">1</span></div>
+        <div class="stat-chip chip-correct">✅ <span id="stat-correct">0</span> Answers</div>
+      </div>
+
+      <!-- Grade picker — tap to change grade instantly -->
+      <div class="grade-picker-row">
+        <span class="grade-picker-label">🎓 Your Grade:</span>
+        <button id="btn-grade-chip" class="grade-chip-btn" aria-label="Change grade" aria-expanded="false">
+          <span id="grade-chip-text">Grade 3</span> <span class="grade-chip-arrow">▾</span>
+        </button>
+      </div>
+      <div class="grade-picker-panel" id="grade-picker-panel" style="display:none" role="listbox" aria-label="Select your grade">
+        <div class="grade-picker-grid">
+          <button class="grade-opt" data-grade="K"  role="option">👶 K</button>
+          <button class="grade-opt" data-grade="1"  role="option">🌱 1</button>
+          <button class="grade-opt" data-grade="2"  role="option">🌼 2</button>
+          <button class="grade-opt" data-grade="3"  role="option">⭐ 3</button>
+          <button class="grade-opt" data-grade="4"  role="option">🚀 4</button>
+          <button class="grade-opt" data-grade="5"  role="option">🔥 5</button>
+          <button class="grade-opt" data-grade="6"  role="option">💎 6</button>
+          <button class="grade-opt" data-grade="7"  role="option">⚡ 7</button>
+          <button class="grade-opt" data-grade="8"  role="option">🏆 8</button>
+        </div>
+        <p class="grade-picker-hint">Your questions will match your grade right away!</p>
       </div>
     </div>
 

@@ -15,6 +15,31 @@ const HomeScreen = (() => {
     if (playBtn)  playBtn.addEventListener('click',  _handlePlay);
     if (charsBtn) charsBtn.addEventListener('click', () => App.showScreen('characters'));
     if (progBtn)  progBtn.addEventListener('click',  () => App.showScreen('progress'));
+
+    // Grade picker
+    const gradeChip  = document.getElementById('btn-grade-chip');
+    const gradePanel = document.getElementById('grade-picker-panel');
+    if (gradeChip && gradePanel) {
+      gradeChip.addEventListener('click', () => {
+        const open = gradePanel.style.display !== 'none';
+        gradePanel.style.display = open ? 'none' : 'block';
+        gradeChip.setAttribute('aria-expanded', String(!open));
+      });
+      document.querySelectorAll('.grade-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const g = btn.dataset.grade;
+          Save.patch({ grade: isNaN(g) ? g : parseInt(g, 10) });
+          Save.persist();
+          _updateGradeChip();
+          gradePanel.style.display = 'none';
+          gradeChip.setAttribute('aria-expanded', 'false');
+          // Highlight selected
+          document.querySelectorAll('.grade-opt').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          App.showToast(`Grade changed to ${_gradeLabel(g)} 🎓`);
+        });
+      });
+    }
   }
 
   function show() {
@@ -69,12 +94,34 @@ const HomeScreen = (() => {
     const levelNumEl = document.getElementById('home-level-num');
     if (levelNumEl) levelNumEl.textContent = save.currentLevel || 1;
 
+    // --- Grade chip ---
+    _updateGradeChip();
+
+    // Highlight the current grade option
+    const g = String(save.grade ?? '3');
+    document.querySelectorAll('.grade-opt').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.grade === g);
+    });
+
     // --- Admin shortcut (only when admin gate code was used) ---
     const adminBtn = document.getElementById('btn-admin-shortcut');
     if (adminBtn) {
       const isAdmin = localStorage.getItem('bunnybrave_gate_v1') === 'admin';
       adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
     }
+  }
+
+  function _gradeLabel(g) {
+    const labels = { K:'Kindergarten', 0:'Kindergarten', 1:'Grade 1', 2:'Grade 2', 3:'Grade 3',
+                     4:'Grade 4', 5:'Grade 5', 6:'Grade 6', 7:'Grade 7', 8:'Grade 8' };
+    return labels[g] ?? `Grade ${g}`;
+  }
+
+  function _updateGradeChip() {
+    const save = Save.get();
+    const g = save.grade ?? '3';
+    const el = document.getElementById('grade-chip-text');
+    if (el) el.textContent = _gradeLabel(String(g));
   }
 
   function _updateStat(id, value) {

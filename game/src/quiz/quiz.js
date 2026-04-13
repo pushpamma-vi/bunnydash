@@ -74,6 +74,7 @@ const Quiz = (() => {
     const badge = document.getElementById('quiz-subject-badge');
     if (badge) {
       badge.textContent = q.subject === 'math' ? '🔢 Math' : q.subject === 'science' ? '🔬 Science' : '📖 Reading';
+      badge.dataset.subject = q.subject;
     }
 
     // Reset answer display
