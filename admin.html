@@ -464,14 +464,6 @@
     const GATE_KEY  = 'bunnybrave_gate_v1';
     const SAVE_KEY  = 'bunnybrave_save_v1';
 
-    const stored = localStorage.getItem(GATE_KEY);
-    if (stored !== 'admin') {
-      document.getElementById('access-denied').style.display = 'block';
-    } else {
-      document.getElementById('admin-content').style.display = 'block';
-      initAdmin();
-    }
-
     /* ── Registered codes (keep in sync with index.html + manage-codes.js) ── */
     const REGISTERED_CODES = [
       { code: 'HOPEHERO',       hash: '49e9777255a096003c5d876e99ac2dd764e31985ee7cfc4f900c01c24466c51b', role: 'Partner' },
@@ -479,6 +471,14 @@
       { code: 'WARRIOR2026',    hash: '083a57c4e00dac894dd6b85425c89c7310b45529afaa532932b01bb5f3bffcb7', role: 'Annual (2026)' },
       { code: 'ADMINBDASH2026', hash: '101e2d6eaecdc368edf8727ac03ad7a56f9086648e04576ca35cd55d7f56a619', role: '🔧 Admin' },
     ];
+
+    const stored = localStorage.getItem(GATE_KEY);
+    if (stored !== 'admin') {
+      document.getElementById('access-denied').style.display = 'block';
+    } else {
+      document.getElementById('admin-content').style.display = 'block';
+      initAdmin();
+    }
 
     /* ── Save helpers ── */
     function getSave() {
