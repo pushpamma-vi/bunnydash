@@ -430,6 +430,47 @@
           </table>
         </div>
 
+        <!-- ─── Add new code directly (no request flow needed) ─── -->
+        <div class="card">
+          <h2>➕ Add Activated Code Directly</h2>
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:16px;">
+            Create and activate a code for any organisation right now — no request flow needed.
+            The plain-text code is hashed behind the scenes and stored immediately.
+            The org can start using it straight away, with no redeploy required.
+          </p>
+          <div class="input-row" style="flex-wrap:wrap; gap:12px; align-items:flex-end;">
+            <div class="input-group" style="flex:1; min-width:180px;">
+              <label>Organisation Name</label>
+              <input type="text" id="direct-org-name"
+                     placeholder="e.g. St Mary's Hospital"
+                     autocomplete="off" />
+            </div>
+            <div class="input-group" style="flex:1; min-width:180px;">
+              <label>Access Code <span style="font-weight:400;font-size:0.8rem;">(will be uppercased)</span></label>
+              <input type="text" id="direct-code-input"
+                     placeholder="e.g. STMARY2027"
+                     autocapitalize="characters" spellcheck="false" autocomplete="off" />
+            </div>
+            <button class="btn btn-primary" onclick="addCodeDirectly()" id="btn-add-code-directly"
+                    style="padding:10px 20px; align-self:flex-end;">
+              ✅ Add &amp; Activate
+            </button>
+          </div>
+          <!-- Result panel -->
+          <div id="direct-code-result"
+               style="display:none; margin-top:14px; padding:14px 16px;
+                      background:#f0fdf4; border:1.5px solid #22c55e;
+                      border-radius:10px; font-size:0.88rem;">
+            <strong>✅ Code activated!</strong>
+            <div style="font-family:monospace; margin-top:6px; line-height:1.8;">
+              Organisation: <strong><span id="direct-result-org"></span></strong><br/>
+              Plain code:   <strong><span id="direct-result-code"></span></strong><br/>
+              SHA-256 hash: <span id="direct-result-hash"
+                                  style="word-break:break-all; font-size:0.78rem; color:#555;"></span>
+            </div>
+          </div>
+        </div>
+
         <!-- Seed / hardcoded codes -->
         <div class="card">
           <h2>🔑 Seed Org Codes</h2>
@@ -968,6 +1009,61 @@
         }
       } catch {
         toast('❌ Network error — revoke failed.');
+      }
+    }
+
+    /* ── Add code directly (admin-chosen code, no request flow) ── */
+    async function addCodeDirectly() {
+      const orgName = (document.getElementById('direct-org-name').value  || '').trim();
+      const code    = (document.getElementById('direct-code-input').value || '').trim().toUpperCase();
+
+      if (!orgName) { toast('❗ Enter an organisation name'); return; }
+      if (!code)    { toast('❗ Enter an access code');        return; }
+      if (code.length < 4) { toast('❗ Code must be at least 4 characters'); return; }
+
+      const key = getAdminKey();
+      if (!key) return;
+
+      const btn = document.getElementById('btn-add-code-directly');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Activating…'; }
+
+      try {
+        const res = await fetch('/.netlify/functions/add-code', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
+          body:    JSON.stringify({ orgName, code }),
+        });
+        const data = await res.json();
+
+        if (res.status === 401) {
+          localStorage.removeItem('bunnybrave_admin_key');
+          toast('❌ Wrong admin key — please try again.');
+          return;
+        }
+        if (!res.ok) {
+          toast(`❌ ${data.error || 'Failed to add code'}`);
+          return;
+        }
+
+        // Show result panel
+        document.getElementById('direct-result-org').textContent  = data.orgName;
+        document.getElementById('direct-result-code').textContent = data.code;
+        document.getElementById('direct-result-hash').textContent = data.hash;
+        document.getElementById('direct-code-result').style.display = 'block';
+
+        // Clear inputs
+        document.getElementById('direct-org-name').value   = '';
+        document.getElementById('direct-code-input').value = '';
+
+        toast(`✅ "${data.code}" activated for ${data.orgName}!`);
+
+        // Reload the approved codes table so the new row appears immediately
+        await loadApprovedCodes();
+
+      } catch {
+        toast('❌ Network error — code not added.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '✅ Add & Activate'; }
       }
     }
 

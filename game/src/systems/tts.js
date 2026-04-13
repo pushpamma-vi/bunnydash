@@ -16,16 +16,20 @@ const TTS = (() => {
     // Cancel any in-progress speech
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(text);
-    utt.rate = 0.92;
-    utt.pitch = 1.05;
+    utt.rate   = 1.08;   // slightly faster = more lively / excited
+    utt.pitch  = 1.45;   // higher pitch = child-friendly, cheerful
     utt.volume = 1.0;
-    // Prefer a friendly voice if available
+    // Prefer bright, child-friendly voices: Zira, Aria, Google first, then female
     const voices = window.speechSynthesis.getVoices();
     const preferred = voices.find(v =>
-      v.name.toLowerCase().includes('female') ||
+      v.name.toLowerCase().includes('zira') ||
+      v.name.toLowerCase().includes('aria') ||
+      v.name.toLowerCase().includes('google us english') ||
+      v.name.toLowerCase().includes('google uk english female') ||
       v.name.toLowerCase().includes('samantha') ||
       v.name.toLowerCase().includes('karen') ||
       v.name.toLowerCase().includes('victoria') ||
+      v.name.toLowerCase().includes('female') ||
       v.default
     );
     if (preferred) utt.voice = preferred;

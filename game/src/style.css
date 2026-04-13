@@ -738,6 +738,23 @@ html, body {
   color: var(--clr-text);
   letter-spacing: 2px;
 }
+/* Reading passage: smaller text so it fits on screen without scrolling */
+.quiz-passage {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #444;
+  background: #f8f6ff;
+  border-left: 3px solid var(--clr-purple);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  max-height: 110px;
+  overflow-y: auto;
+  text-align: left;
+  letter-spacing: 0;
+}
 .quiz-subject-badge {
   position: absolute; top: 8px; right: 10px;
   background: var(--clr-sky-deep);
@@ -809,14 +826,20 @@ html, body {
 
 .quiz-feedback {
   width: 100%;
-  background: var(--clr-warm);
-  border: 2px solid var(--clr-warn, var(--clr-sun));
+  background: #fff8e1;
+  border: 2.5px solid #f59e0b;
   border-radius: var(--radius-md);
-  padding: 12px 16px;
-  font-size: 0.95rem; font-weight: 700;
+  padding: 14px 18px;
+  font-size: 1.05rem; font-weight: 800;
   text-align: center;
   color: #7a5a00;
-  animation: fadeIn 0.3s ease;
+  animation: feedbackPop 0.4s cubic-bezier(.36,.07,.19,.97);
+  box-shadow: 0 3px 12px rgba(245,158,11,0.25);
+}
+@keyframes feedbackPop {
+  0%   { transform: scale(0.85); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
 }
 
 .btn-hint {
@@ -1043,6 +1066,22 @@ html, body {
   0%   { background: white; }
   30%  { background: #c8f7c5; }
   100% { background: white; }
+}
+
+/* ── Fountain celebration overlay ── */
+@keyframes fountain-up {
+  0%   { transform: translateY(0)     scale(0.5) rotate(0deg);   opacity: 1; }
+  70%  { opacity: 1; }
+  100% { transform: translateY(-480px) scale(1.1) rotate(540deg); opacity: 0; }
+}
+@keyframes celebrate-pop {
+  0%   { transform: translate(-50%, -50%) scale(0);   }
+  55%  { transform: translate(-50%, -50%) scale(1.35); }
+  100% { transform: translate(-50%, -50%) scale(1);   }
+}
+@keyframes celebrate-fade {
+  0%,70% { opacity: 1; }
+  100%   { opacity: 0; }
 }
 
 /* ═══════════════════════════════════════════════════════════════

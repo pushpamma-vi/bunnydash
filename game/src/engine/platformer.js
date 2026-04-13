@@ -82,11 +82,12 @@ const Platformer = (() => {
     const baseH = 340;
 
     while (px < _levelWidth - 300) {
-      const gap    = 80 + Math.random() * (60 + level * 1.5);
-      const dh     = (Math.random() - 0.5) * (40 + level * 0.8);
+      const ph     = _difficultyPhase(level);
+      const gap    = ph.gapBase + Math.random() * ph.gapVar;
+      const dh     = (Math.random() - 0.5) * ph.heightVar * 2;
       const pw     = isRainbow
         ? _rainbowPlatformWidth(level, px)
-        : (100 - Math.min(level, 50) * 0.6 + Math.random() * 40);
+        : Math.max(22, ph.platBase + (Math.random() - 0.5) * ph.platVar);
 
       const py = Math.max(100, Math.min(320, baseH + dh));
 
@@ -155,6 +156,22 @@ const Platformer = (() => {
     // As levels progress, platforms get narrower (kid's design)
     const base = 100 - Math.min(level - 70, 70) * 0.8;
     return Math.max(20, base + (Math.random() - 0.5) * 30);
+  }
+
+  /* ── Difficulty phase (one clear step-up every 5 levels) ───────── */
+  function _difficultyPhase(level) {
+    // p = 0 for levels 1-5, p = 1 for 6-10, p = 2 for 11-15, …
+    const p = Math.floor((level - 1) / 5);
+    return {
+      // gap between platforms grows noticeably each phase
+      gapBase:   Math.min(50  + p * 26, 280),
+      gapVar:    Math.min(22  + p * 10, 90),
+      // platform width shrinks noticeably each phase
+      platBase:  Math.max(140 - p * 14, 22),
+      platVar:   24,
+      // vertical height variation grows each phase
+      heightVar: Math.min(10  + p *  5, 65),
+    };
   }
 
   /* ── Input ────────────────────────────────────────────────── */

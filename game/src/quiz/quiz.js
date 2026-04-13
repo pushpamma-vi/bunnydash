@@ -192,6 +192,36 @@ const Quiz = (() => {
     }
   }
 
+  /* ── Fountain celebration (correct answer) ────────────────── */
+  function _showFountain() {
+    const overlay = document.createElement('div');
+    overlay.id = 'quiz-fountain';
+    overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;animation:celebrate-fade 3s ease forwards;';
+
+    const colors = ['#ff6b6b','#ffd166','#6dbf67','#5bb8f5','#c9b1f7','#ffa04d','#ff69b4','#4cd9ac'];
+    for (let i = 0; i < 32; i++) {
+      const dot = document.createElement('div');
+      const color = colors[i % colors.length];
+      const left  = 3 + Math.random() * 94;
+      const delay = (Math.random() * 0.9).toFixed(2);
+      const dur   = (1.3 + Math.random() * 0.9).toFixed(2);
+      const size  = 7 + Math.floor(Math.random() * 11);
+      const shape = i % 4 === 0 ? '3px' : '50%'; // mix squares + circles
+      dot.style.cssText = `position:absolute;bottom:18%;left:${left}%;width:${size}px;height:${size}px;border-radius:${shape};background:${color};animation:fountain-up ${dur}s ${delay}s ease-out both;`;
+      overlay.appendChild(dot);
+    }
+
+    // Big emoji burst in centre
+    const emojis = ['🎉','⭐','🌟','🏆','🎊','✨'];
+    const msg = document.createElement('div');
+    msg.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    msg.style.cssText = 'position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:5rem;animation:celebrate-pop 0.6s ease-out both;';
+    overlay.appendChild(msg);
+
+    document.body.appendChild(overlay);
+    setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 3200);
+  }
+
   /* ── Correct answer ───────────────────────────────────────── */
   function _onCorrect() {
     // Kid's design: "if the question disappears then the answer is correct"
@@ -217,12 +247,13 @@ const Quiz = (() => {
       }
     }
 
-    // Kid's design: "another question comes but not the same has to come"
-    // We check if the level is done (one correct = proceed) or if chain mode
-    // Standard mode: one correct answer → proceed to next adventure
+    // Fountain celebration — kids need a joyful moment to register they got it right!
+    _showFountain();
+
+    // Proceed after fountain (3 s gives kids time to enjoy the celebration)
     setTimeout(() => {
       if (_onComplete) _onComplete(true);
-    }, 800);
+    }, 3000);
   }
 
   /* ── Wrong answer ─────────────────────────────────────────── */
@@ -248,7 +279,12 @@ const Quiz = (() => {
       TTS.speak(msg);
     }
 
-    // Kid's design: "another will come if the answer is not correct" — rephrased, not identical
+    // Show a "coming up next" hint after 1.5 s so kids know a new question is on the way
+    setTimeout(() => {
+      if (fb) fb.textContent += '  ⏳ Next question coming up...';
+    }, 1500);
+
+    // Kid's design: "another will come if the answer is not correct" — 2.8 s so kids can read the message
     setTimeout(() => {
       const grade = window.Save ? window.Save.get().grade : '3';
       const followUp = window.Questions
@@ -273,7 +309,7 @@ const Quiz = (() => {
       if (window.TTS && window.Save && window.Save.get().settings.tts) {
         TTS.speak(followUp.display);
       }
-    }, 1600);
+    }, 2800);  // 2.8 s — enough for kids to read the feedback
   }
 
   /* ── Hint ─────────────────────────────────────────────────── */
