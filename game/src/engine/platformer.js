@@ -499,12 +499,15 @@ const Platformer = (() => {
   }
 
   /* ── Fall detection ──────────────────────────────────────────── */
-  function _checkFall(canvasH) {
+  function _checkFall() {
     if (_levelDone || _fellRecently) return;
-    // Use camera-relative threshold so vertical scrolling doesn't affect it
-    if (player.y > _camera.y + canvasH + 110) {
+    // Fixed world-Y threshold: if the player's feet go more than 220px
+    // below the lowest safe ground (GROUND_Y=340), it's a fall.
+    // This is camera-independent — the camera chasing the player
+    // cannot mask the fall.
+    if (player.y > 340 + 220) {
       _fellRecently = true;
-      setTimeout(() => { _fellRecently = false; }, 2000);
+      setTimeout(() => { _fellRecently = false; }, 2200);
       if (_onFall) _onFall();
     }
   }
@@ -516,16 +519,12 @@ const Platformer = (() => {
     _camera.x += (targetX - _camera.x) * 0.1;
     _camera.x = Math.max(0, Math.min(_camera.x, _levelWidth - cw));
 
-    // Vertical: from L5 the camera scrolls up/down with the player
-    // giving the level a true three-dimensional feel
-    const cfg = _levelConfig(_level);
-    if (cfg.verticalCamera) {
-      const targetY = player.y - ch * 0.42; // keep player ~42% from top
-      _camera.y += (targetY - _camera.y) * 0.07;
-      _camera.y = Math.max(-80, _camera.y); // don't over-scroll above sky
-    } else {
-      _camera.y = 0;
-    }
+    // Vertical: ALWAYS track player so the bunny is always visible
+    // regardless of level. Keep player at ~45% from top of screen.
+    const targetY = player.y - ch * 0.45;
+    _camera.y += (targetY - _camera.y) * 0.09;
+    // Don't scroll so far up that sky goes below the canvas top
+    _camera.y = Math.max(-120, _camera.y);
   }
 
   /* ── Rendering ────────────────────────────────────────────── */
@@ -782,7 +781,7 @@ const Platformer = (() => {
     _resolveCollisions();
     _checkStars();
     _checkTunnel();
-    _checkFall(ch);
+    _checkFall();
     _updateCamera(cw, ch);
     _render();
 
