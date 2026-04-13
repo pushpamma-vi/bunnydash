@@ -12,7 +12,7 @@ const CORS = {
   'Content-Type':                 'application/json',
 };
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: CORS, body: '' };
   }
@@ -24,7 +24,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store    = getStore('bunnybrave');
+    const store    = getStore({ name: 'bunnybrave', context });
     const requests = await store.get('requests', { type: 'json' }).catch(() => []);
     // Sort: pending first, then by date desc
     const list = (Array.isArray(requests) ? requests : [])

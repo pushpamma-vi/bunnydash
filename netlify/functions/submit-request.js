@@ -19,7 +19,7 @@ function esc(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: CORS, body: '' };
   }
@@ -58,7 +58,7 @@ exports.handler = async (event) => {
 
   // Persist request in Blobs
   try {
-    const store    = getStore('bunnybrave');
+    const store    = getStore({ name: 'bunnybrave', context });
     const existing = await store.get('requests', { type: 'json' }).catch(() => []);
     const list     = Array.isArray(existing) ? existing : [];
     list.push(newRequest);
