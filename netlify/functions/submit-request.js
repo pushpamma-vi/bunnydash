@@ -65,7 +65,7 @@ exports.handler = async (event) => {
     await store.setJSON('requests', list);
   } catch (err) {
     console.error('[submit-request] Blob error:', err);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Storage unavailable — please try again.' }) };
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Storage unavailable — please try again.', _debug: String(err?.message ?? err).slice(0, 200) }) };
   }
 
   return {
