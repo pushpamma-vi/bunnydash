@@ -163,7 +163,7 @@ const App = (() => {
 
     const logoutBtn = document.getElementById('btn-logout');
     if (logoutBtn) logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('bunnydash_gate_v1');
+      localStorage.removeItem('bunnybrave_gate_v1');
       window.location.href = '../index.html';
     });
 

@@ -5,7 +5,7 @@
    Never deletes completed levels or correct answers.
 ═══════════════════════════════════════════════════════════════ */
 
-const SAVE_KEY = 'bunnydash_save_v1';
+const SAVE_KEY = 'bunnybrave_save_v1';
 
 const Save = (() => {
   const defaults = () => ({

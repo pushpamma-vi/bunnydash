@@ -58,7 +58,7 @@ exports.handler = async (event) => {
 
   // Persist request in Blobs
   try {
-    const store    = getStore('bunnydash');
+    const store    = getStore('bunnybrave');
     const existing = await store.get('requests', { type: 'json' }).catch(() => []);
     const list     = Array.isArray(existing) ? existing : [];
     list.push(newRequest);

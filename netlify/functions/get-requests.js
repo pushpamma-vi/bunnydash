@@ -24,7 +24,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store    = getStore('bunnydash');
+    const store    = getStore('bunnybrave');
     const requests = await store.get('requests', { type: 'json' }).catch(() => []);
     // Sort: pending first, then by date desc
     const list = (Array.isArray(requests) ? requests : [])

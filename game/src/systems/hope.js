@@ -38,7 +38,7 @@ const Hope = (() => {
   // ── Energy-level-specific messages (low energy days) ──
   const LOW_ENERGY_MESSAGES = [
     "I know today is tough. I'm proud of you for being here at all. 💙",
-    "Even five minutes of Bunny Dash is a win today. 🐰",
+    "Even five minutes of Bunny Brave is a win today. 🐰",
     "Rest Mode is here for you. No pressure — just Fluff keeping you company. 💤",
     "Today is a rest day and that's completely okay. You're still a champion. 🌙",
     "Your body is doing so much work right now. Being here at all is brave. 💜",

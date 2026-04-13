@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bunny Dash — Admin Dashboard</title>
+  <title>Bunny Brave — Admin Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
   <style>
@@ -252,12 +252,12 @@
 
   <div class="topbar">
     <div class="topbar-left">
-      <h1>🔧 Bunny Dash — Admin Dashboard</h1>
+      <h1>🔧 Bunny Brave — Admin Dashboard</h1>
       <div class="sub">Coordinator &amp; educator tools — keep this page private</div>
     </div>
     <a class="back-link" href="index.html">← Gate</a>
     <a class="back-link" href="game/index.html" style="margin-left:8px;">🐾 Play Game</a>
-    <button class="back-link" style="margin-left:8px; border:none; cursor:pointer; font-family:inherit;" onclick="localStorage.removeItem('bunnydash_gate_v1'); window.location.href='index.html';">🔓 Log Out</button>
+    <button class="back-link" style="margin-left:8px; border:none; cursor:pointer; font-family:inherit;" onclick="localStorage.removeItem('bunnybrave_gate_v1'); window.location.href='index.html';">🔓 Log Out</button>
   </div>
 
   <!-- Access denied overlay (shown if not admin) -->
@@ -461,8 +461,8 @@
 
   <script>
     /* ── Guard: only allow admin-flagged sessions ── */
-    const GATE_KEY  = 'bunnydash_gate_v1';
-    const SAVE_KEY  = 'bunnydash_save_v1';
+    const GATE_KEY  = 'bunnybrave_gate_v1';
+    const SAVE_KEY  = 'bunnybrave_save_v1';
 
     const stored = localStorage.getItem(GATE_KEY);
     if (stored !== 'admin') {
@@ -517,14 +517,14 @@
        ACCESS REQUESTS
     ════════════════════════════════════════════════════════ */
     let _requests = [];
-    const _adminKey = localStorage.getItem('bunnydash_admin_key') || '';
+    const _adminKey = localStorage.getItem('bunnybrave_admin_key') || '';
 
     // Persist admin API key in localStorage so we don't ask every time
     function getAdminKey() {
-      let k = localStorage.getItem('bunnydash_admin_key') || '';
+      let k = localStorage.getItem('bunnybrave_admin_key') || '';
       if (!k) {
         k = prompt('Enter your Admin Secret key (set in Netlify env ADMIN_SECRET):') || '';
-        if (k) localStorage.setItem('bunnydash_admin_key', k);
+        if (k) localStorage.setItem('bunnybrave_admin_key', k);
       }
       return k;
     }
@@ -545,7 +545,7 @@
           headers: { 'X-Admin-Key': key },
         });
         if (res.status === 401) {
-          localStorage.removeItem('bunnydash_admin_key');
+          localStorage.removeItem('bunnybrave_admin_key');
           toast('❌ Wrong admin key — please try again.');
           if (loadEl) loadEl.style.display = 'none';
           return;

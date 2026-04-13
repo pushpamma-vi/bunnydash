@@ -57,7 +57,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'requestId required' }) };
   }
 
-  const store = getStore('bunnydash');
+  const store = getStore('bunnybrave');
 
   // Load requests
   let requests;
@@ -120,14 +120,14 @@ exports.handler = async (event) => {
       auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
     });
     await transporter.sendMail({
-      from:    `"Bunny Dash" <${process.env.GMAIL_USER}>`,
+      from:    `"Bunny Brave" <${process.env.GMAIL_USER}>`,
       replyTo: process.env.GMAIL_USER,
       to:      req.email,
-      subject: '🐰 Your Bunny Dash Access Code',
+      subject: '🐰 Your Bunny Brave Access Code',
       html: `
         <div style="font-family:Arial,sans-serif;max-width:560px;padding:32px;background:#f5f3ff;border-radius:16px;">
           <div style="text-align:center;font-size:64px;">🐰</div>
-          <h1 style="text-align:center;color:#7c3aed;margin:12px 0 4px;">Welcome to Bunny Dash!</h1>
+          <h1 style="text-align:center;color:#7c3aed;margin:12px 0 4px;">Welcome to Bunny Brave!</h1>
           <p style="text-align:center;color:#6b7280;margin-bottom:28px;">
             Hi ${esc(req.contactName)}, your organization <strong>${esc(req.orgName)}</strong> has been approved.
           </p>
@@ -141,7 +141,7 @@ exports.handler = async (event) => {
             </a>
           </div>
           <p style="color:#6b7280;font-size:0.85rem;text-align:center;line-height:1.6;">
-            Enter this code on the Bunny Dash gate page.<br>
+            Enter this code on the Bunny Brave gate page.<br>
             Your device will be remembered — you won't need to re-enter the code on the same browser.<br><br>
             <em>Built for warriors. Full of hope. 💛</em>
           </p>

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Bunny Dash — Access Code Manager
+ * Bunny Brave — Access Code Manager
  * ─────────────────────────────────
  * Usage:
  *   node manage-codes.js hash HOPEHERO          # get the hash for a code
@@ -34,7 +34,7 @@ function sha256(text) {
 
 function printHelp() {
   console.log(`
-  Bunny Dash — Access Code Manager
+  Bunny Brave — Access Code Manager
   ─────────────────────────────────
   Commands:
     hash     <CODE>    Print the SHA-256 hash of a code

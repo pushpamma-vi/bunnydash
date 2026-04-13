@@ -72,7 +72,7 @@ const HomeScreen = (() => {
     // --- Admin shortcut (only when admin gate code was used) ---
     const adminBtn = document.getElementById('btn-admin-shortcut');
     if (adminBtn) {
-      const isAdmin = localStorage.getItem('bunnydash_gate_v1') === 'admin';
+      const isAdmin = localStorage.getItem('bunnybrave_gate_v1') === 'admin';
       adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
     }
   }

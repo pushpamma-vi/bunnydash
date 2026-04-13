@@ -15,7 +15,7 @@ const CORS = {
 
 exports.handler = async () => {
   try {
-    const store = getStore('bunnydash');
+    const store = getStore('bunnybrave');
     const codes = await store.get('approved-codes', { type: 'json' }).catch(() => []);
     const list  = Array.isArray(codes) ? codes : [];
 
