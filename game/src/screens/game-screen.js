@@ -51,7 +51,60 @@ const GameScreen = (() => {
 
     _hidePauseOverlay();
 
-    Platformer.startLevel(_currentLevel, _currentChar, _onLevelComplete, _onFall);
+    // Show 2-second level announce, THEN start the platformer
+    _showLevelAnnounce(_currentLevel, () => {
+      Platformer.startLevel(_currentLevel, _currentChar, _onLevelComplete, _onFall);
+    });
+  }
+
+  /* ── Level announce banner (2 s before play) ────────────────── */
+  function _showLevelAnnounce(level, onDone) {
+    const overlay = document.getElementById('level-announce');
+    const numEl   = document.getElementById('la-number');
+    const labelEl = document.getElementById('la-label');
+    const dotsEl  = document.getElementById('la-dots');
+
+    const LABELS = [
+      null,
+      'Tutorial \u2014 Just Walk! \ud83d\udc23',
+      'Jumping Begins! \ud83d\udc30',
+      'Moving Platforms! \ud83c\udf1f',
+      'Two Staircases! \ud83e\ude9c\ud83e\ude9c',
+      'Camera Scrolls! \ud83d\udcf8',
+      'Platforms Disappear! \ud83d\udcab',
+      'Narrow & Fast! \ud83c\udfc6',
+      'Expert Terrain! \ud83d\ude24',
+      'Near Max Hardness! \ud83d\udd25',
+      'Champion Level! \ud83d\udc51',
+    ];
+    const label = LABELS[Math.min(level, LABELS.length - 1)] || 'Master Challenge! \ud83c\udf08';
+    const filled = Math.max(1, Math.min(10, level));
+
+    if (numEl)   numEl.textContent  = `LEVEL ${level}`;
+    if (labelEl) labelEl.textContent = label;
+    if (dotsEl) {
+      dotsEl.innerHTML = '';
+      for (let i = 0; i < 10; i++) {
+        const d = document.createElement('span');
+        d.className = 'la-dot' + (i < filled ? ' filled' : '');
+        dotsEl.appendChild(d);
+      }
+    }
+
+    if (overlay) {
+      overlay.style.display = 'flex';
+      overlay.classList.remove('la-fade-out');
+      setTimeout(() => {
+        overlay.classList.add('la-fade-out');
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          overlay.classList.remove('la-fade-out');
+          onDone();
+        }, 500);
+      }, 1900);
+    } else {
+      onDone();
+    }
   }
 
   // ---- Platformer callbacks ----

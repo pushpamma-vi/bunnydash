@@ -86,11 +86,15 @@ const Platformer = (() => {
     let curY = GROUND_Y;  // ← PATH WALKER: curY tracks the current elevation
 
     // ── Schedule deliberate climb sections across the level ────
-    // Each climb: 3-4 forced upward jumps, then a descent back down.
-    // Even L2 has 1 climb so it looks visibly different from L1.
+    // CRITICAL: first climb starts at px=260 (right after the safe
+    // starting platform) so the player sees the staircase immediately.
     const climbTriggers = [];
-    for (let c = 0; c < cfg.climbSections; c++) {
-      climbTriggers.push((_levelWidth / (cfg.climbSections + 1)) * (c + 1));
+    if (cfg.climbSections > 0) {
+      climbTriggers.push(260);  // FIRST climb is instant — visible within 2 seconds
+      for (let c = 1; c < cfg.climbSections; c++) {
+        // Remaining climbs spread evenly across the rest of the level
+        climbTriggers.push(700 + ((_levelWidth - 700) / cfg.climbSections) * c);
+      }
     }
     let climbTriggerIdx = 0;
     let climbSteps      = 0;  // upward steps remaining
@@ -212,52 +216,43 @@ const Platformer = (() => {
     return Math.max(20, base + (Math.random() - 0.5) * 30);
   }
 
-  /* ── Per-level difficulty config ─────────────────────────────
-     Explicit lookup table so every single level is deliberately
-     designed. Formula-based scaling was too gradual to feel.
-
-     Physics reference (for tuning):
-       BASE_JUMP=-11, GRAVITY=0.45, BASE_SPEED=3.6
-       Max horizontal range ≈ 176px  |  Max jump height ≈ 134px
-       Gap 30px → walkable  |  90px → easy jump  |  165px → hard
+  /* ── Per-level difficulty config (explicit lookup table) ──────────
+     Physics ref: BASE_JUMP=-11, GRAVITY=0.45, BASE_SPEED=3.6
+       gap  25 = walkable   |  90 = easy jump  |  165 = hard jump
+       step 40 = small rise |  65 = medium      |  90  = tall
   ──────────────────────────────────────────────────────────── */
   function _levelConfig(level) {
-    //         gap   platW  hVar  hStep  mov   blink cls  vc
+    //         gap  platW hVar hStep  mov   blink cls   vc
     const T = [
-      null, //  0  (1-indexed)
-      [ 28,  190,   0,   0,  0.00, 0.00,  0, false], // L1  FLAT TUTORIAL  — walk right, no skill needed
-      [ 88,  148,  20,  40,  0.00, 0.00,  1, false], // L2  first real jumps + one staircase climb
-      [108,  128,  28,  45,  0.12, 0.00,  1, false], // L3  first moving platform
-      [124,  110,  36,  50,  0.18, 0.00,  2, false], // L4  two climbs, wider gaps
-      [138,   96,  43,  54,  0.22, 0.00,  2, true ], // L5  vertical camera ON
-      [148,   85,  49,  57,  0.26, 0.08,  3, true ], // L6  first blinking platform
-      [156,   75,  54,  60,  0.29, 0.14,  3, true ], // L7
-      [163,   66,  58,  63,  0.32, 0.18,  4, true ], // L8
-      [168,   58,  62,  65,  0.35, 0.21,  4, true ], // L9
-      [173,   51,  65,  67,  0.37, 0.24,  5, true ], // L10
-      [177,   45,  68,  69,  0.39, 0.26,  5, true ], // L11
-      [180,   40,  71,  71,  0.41, 0.28,  6, true ], // L12
-      [183,   35,  73,  73,  0.43, 0.30,  6, true ], // L13
-      [185,   31,  75,  74,  0.44, 0.31,  6, true ], // L14
-      [187,   28,  77,  75,  0.45, 0.32,  7, true ], // L15
+      null,  //  0  (1-indexed)
+      [  22,  205,   0,   0, 0.00, 0.00,  0, false], // L1  DEAD FLAT tutorial
+      [  92,  155,  12,  58, 0.00, 0.00,  1, false], // L2  big gap jump + first staircase
+      [ 115,  132,  18,  62, 0.14, 0.00,  2, false], // L3  first moving platform, 2 climbs
+      [ 134,  112,  24,  66, 0.20, 0.00,  2, false], // L4  wider gaps, narrower platforms
+      [ 148,   96,  30,  69, 0.24, 0.00,  3, true ], // L5  vertical camera ON, 3 climbs
+      [ 157,   82,  36,  72, 0.28, 0.10,  3, true ], // L6  blinking platforms begin
+      [ 164,   70,  41,  74, 0.31, 0.16,  4, true ], // L7
+      [ 170,   60,  45,  76, 0.34, 0.20,  4, true ], // L8
+      [ 175,   52,  49,  78, 0.37, 0.23,  5, true ], // L9
+      [ 179,   44,  52,  79, 0.39, 0.25,  5, true ], // L10
     ];
 
     const idx = Math.min(level, T.length - 1);
     const r   = T[idx];
-    const excess = Math.max(0, level - (T.length - 1));
+    const ex  = Math.max(0, level - (T.length - 1));
     return {
-      gapMin:        Math.min(210, r[0] + excess * 1.5),
-      gapVar:        36,
-      platWidth:     Math.max(24,  r[1] - excess),
+      gapMin:        Math.min(215, r[0] + ex * 1.5),
+      gapVar:        32,
+      platWidth:     Math.max(24,  r[1] - ex),
       platWidthVar:  10,
-      heightVar:     Math.min(85,  r[2] + excess * 0.5), // free-walk step (organic terrain)
-      heightStep:    Math.min(88,  r[3] + excess * 0.5), // forced climb step (staircase)
-      movingChance:  Math.min(0.55, r[4] + excess * 0.008),
+      heightVar:     Math.min(80,  r[2] + ex * 0.4), // organic free-walk  (small)
+      heightStep:    Math.min(90,  r[3] + ex * 0.4), // forced staircase   (large)
+      movingChance:  Math.min(0.55, r[4] + ex * 0.008),
       moveSpeed:     0.013 + level * 0.001,
-      blinkChance:   Math.min(0.40, r[5] + excess * 0.008),
-      climbSections: Math.min(8, r[6]),
+      blinkChance:   Math.min(0.40, r[5] + ex * 0.008),
+      climbSections: Math.min(8,   r[6]),
       verticalCamera: r[7],
-      levelWidth:    2000 + level * 90,
+      levelWidth:    1900 + level * 90,
     };
   }
 
