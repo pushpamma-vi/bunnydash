@@ -22,9 +22,10 @@ const code = args[1];
 // ── Current hashes registered in index.html ──────────────────
 // Keep this in sync with the VALID_HASHES set in index.html
 const REGISTERED = {
-  'HOPEHERO':    '49e9777255a096003c5d876e99ac2dd764e31985ee7cfc4f900c01c24466c51b',
-  'BUNNYDASH':   'a3755082c8076ec83225f7059af93ab8d4e40afd397e58e7fa7b5138937f023f',
-  'WARRIOR2026': '083a57c4e00dac894dd6b85425c89c7310b45529afaa532932b01bb5f3bffcb7',
+  'HOPEHERO':       '49e9777255a096003c5d876e99ac2dd764e31985ee7cfc4f900c01c24466c51b',
+  'BUNNYDASH':      'a3755082c8076ec83225f7059af93ab8d4e40afd397e58e7fa7b5138937f023f',
+  'WARRIOR2026':    '083a57c4e00dac894dd6b85425c89c7310b45529afaa532932b01bb5f3bffcb7',
+  'ADMINBDASH2026': '101e2d6eaecdc368edf8727ac03ad7a56f9086648e04576ca35cd55d7f56a619', // admin — never share with patients
 };
 
 function sha256(text) {

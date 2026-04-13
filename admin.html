@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bunny Dash — Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple:   #7c3aed;
+      --purple-l: #a78bfa;
+      --purple-d: #5b21b6;
+      --sky:    #b8e4ff;
+      --warm:   #ffd166;
+      --warm-d: #f4a261;
+      --green:  #10b981;
+      --green-d:#065f46;
+      --red:    #ef4444;
+      --red-d:  #991b1b;
+      --text:   #1e1e2e;
+      --muted:  #6b7280;
+      --bg:     #f5f3ff;
+      --card:   #ffffff;
+      --radius: 16px;
+      --font: 'Nunito', 'Comic Sans MS', sans-serif;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: linear-gradient(135deg, var(--purple), var(--purple-d));
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px rgba(91,33,182,0.3);
+    }
+    .topbar h1 { font-size: 1.3rem; font-weight: 900; }
+    .topbar .sub { font-size: 0.8rem; opacity: 0.8; margin-top: 2px; }
+    .topbar-left { flex: 1; }
+    .topbar a.back-link {
+      color: #fff; text-decoration: none; font-weight: 700;
+      font-size: 0.9rem; padding: 8px 16px;
+      background: rgba(255,255,255,0.15); border-radius: 10px;
+      transition: background 0.2s;
+    }
+    .topbar a.back-link:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── Layout ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 10px 20px; border: 2px solid transparent;
+      border-radius: 12px; font-size: 0.95rem; font-weight: 700;
+      font-family: var(--font); cursor: pointer; background: var(--card);
+      color: var(--muted); transition: all 0.2s;
+    }
+    .tab-btn:hover { border-color: var(--purple-l); color: var(--purple); }
+    .tab-btn.active {
+      background: var(--purple); color: #fff;
+      border-color: var(--purple);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border-radius: var(--radius);
+      padding: 24px; margin-bottom: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .card h2 { font-size: 1.1rem; font-weight: 900; margin-bottom: 16px; color: var(--text); }
+    .card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; color: var(--muted); }
+
+    /* ── Stat grid ── */
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+    }
+    .stat-box {
+      background: var(--bg); border-radius: 12px; padding: 16px;
+      text-align: center;
+    }
+    .stat-box .val { font-size: 2rem; font-weight: 900; color: var(--purple); }
+    .stat-box .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 10px 20px; border: none; border-radius: 10px;
+      font-size: 0.95rem; font-weight: 700; font-family: var(--font);
+      cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+    }
+    .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--purple); color: #fff; }
+    .btn-green   { background: var(--green);  color: #fff; }
+    .btn-danger  { background: var(--red);    color: #fff; }
+    .btn-copy    { background: var(--bg); color: var(--purple); border: 2px solid var(--purple-l); }
+    .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
+
+    /* ── Input row ── */
+    .input-row {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+      margin-bottom: 14px;
+    }
+    .input-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+    .input-group label { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+    .input-group input, .input-group select {
+      padding: 10px 12px; border: 2px solid #e5e7eb;
+      border-radius: 10px; font-size: 1rem; font-family: var(--font);
+      outline: none; transition: border-color 0.2s;
+      background: var(--bg);
+    }
+    .input-group input:focus, .input-group select:focus {
+      border-color: var(--purple-l);
+    }
+
+    /* ── Code hash result ── */
+    .hash-result {
+      margin-top: 14px; padding: 14px 16px;
+      background: #1e1e2e; border-radius: 10px;
+      font-family: monospace; font-size: 0.85rem;
+      color: #a78bfa; word-break: break-all;
+      display: none;
+    }
+    .hash-result .label { color: #6b7280; font-size: 0.75rem; margin-bottom: 4px; }
+
+    /* ── Org codes table ── */
+    .codes-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .codes-table th {
+      text-align: left; padding: 8px 12px;
+      background: var(--bg); color: var(--muted);
+      font-size: 0.8rem; font-weight: 700;
+    }
+    .codes-table td { padding: 10px 12px; border-top: 1px solid #f3f4f6; }
+    .codes-table tr:hover td { background: #faf5ff; }
+    .hash-mono { font-family: monospace; font-size: 0.78rem; color: var(--purple); }
+
+    /* ── JSON viewer ── */
+    .json-viewer {
+      background: #1e1e2e; border-radius: 10px; padding: 16px;
+      font-family: monospace; font-size: 0.82rem; color: #c9d1d9;
+      max-height: 420px; overflow-y: auto; white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .json-key    { color: #a78bfa; }
+    .json-str    { color: #e8c46e; }
+    .json-num    { color: #79c0ff; }
+    .json-bool   { color: #ff7b72; }
+    .json-null   { color: #6e7681; }
+
+    /* ── Level jump ── */
+    .level-current {
+      font-size: 3rem; font-weight: 900; color: var(--purple);
+      text-align: center; padding: 20px 0 8px;
+    }
+    .level-current small {
+      display: block; font-size: 0.85rem;
+      color: var(--muted); font-weight: 400;
+    }
+    .level-controls {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; padding: 12px 0 20px;
+    }
+    .level-controls button {
+      width: 48px; height: 48px; border-radius: 50%;
+      font-size: 1.4rem; border: none; cursor: pointer;
+      font-weight: 900; font-family: var(--font);
+      background: var(--purple-l); color: var(--purple-d);
+      transition: transform 0.15s;
+    }
+    .level-controls button:hover { transform: scale(1.1); }
+    #level-jump-val {
+      font-size: 2rem; font-weight: 900; min-width: 60px;
+      text-align: center; color: var(--text);
+    }
+
+    /* ── Badge list ── */
+    .badge-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .badge-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .badge-chip.earned  { background: #d1fae5; color: #065f46; }
+    .badge-chip.locked  { background: #f3f4f6; color: #9ca3af; }
+
+    /* ── Toast ── */
+    #admin-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: #1e1e2e; color: #fff; padding: 12px 24px;
+      border-radius: 12px; font-size: 0.9rem; font-weight: 700;
+      transition: transform 0.3s; z-index: 999; pointer-events: none;
+    }
+    #admin-toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Access denied ── */
+    #access-denied {
+      display: none; text-align: center; padding: 80px 24px;
+    }
+    #access-denied .icon { font-size: 64px; }
+    #access-denied h2 { font-size: 1.5rem; margin: 16px 0 8px; }
+    #access-denied p { color: var(--muted); margin-bottom: 24px; }
+
+    .section-divider { height: 1px; background: #f3f4f6; margin: 20px 0; }
+    .warning-box {
+      background: #fef9c3; border: 1.5px solid #fde047;
+      border-radius: 10px; padding: 12px 16px;
+      font-size: 0.85rem; color: #713f12; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>🔧 Bunny Dash — Admin Dashboard</h1>
+      <div class="sub">Coordinator &amp; educator tools — keep this page private</div>
+    </div>
+    <a class="back-link" href="index.html">← Gate</a>
+    <a class="back-link" href="game/index.html" style="margin-left:8px;">🐾 Play Game</a>
+  </div>
+
+  <!-- Access denied overlay (shown if not admin) -->
+  <div id="access-denied">
+    <div class="icon">🔒</div>
+    <h2>Admin Access Required</h2>
+    <p>Enter the admin code on the gate page first.</p>
+    <a href="index.html" class="btn btn-primary">Go to Gate →</a>
+  </div>
+
+  <!-- Admin content (shown only for admins) -->
+  <div id="admin-content" style="display:none">
+    <div class="container">
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="tab-btn" data-tab="player">👤 Player Data</button>
+        <button class="tab-btn" data-tab="level">🎮 Level Control</button>
+        <button class="tab-btn" data-tab="codes">🔑 Org Codes</button>
+      </div>
+
+      <!-- ─── DASHBOARD ─────────────────────────────────────── -->
+      <div class="tab-panel active" id="tab-dashboard">
+        <div class="card">
+          <h2>📊 Player Overview</h2>
+          <div class="stat-grid" id="stat-grid"></div>
+        </div>
+
+        <div class="card">
+          <h2>🏅 Badges</h2>
+          <div class="badge-list" id="badge-list"></div>
+        </div>
+
+        <div class="card">
+          <h2>⚡ Quick Actions</h2>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="jumpToLevel(1)">↩ Restart from Level 1</button>
+            <button class="btn btn-green"   onclick="unlockAllCharacters()">🐰 Unlock All Characters</button>
+            <button class="btn btn-danger"  onclick="confirmReset()">🗑 Reset All Progress</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── PLAYER DATA ───────────────────────────────────── -->
+      <div class="tab-panel" id="tab-player">
+        <div class="card">
+          <h2>👤 Full Save Data (localStorage)</h2>
+          <div class="warning-box">⚠️ Edits here directly modify the player's save. Use with care.</div>
+          <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" onclick="refreshJsonView()">🔄 Refresh</button>
+            <button class="btn btn-copy btn-sm"    onclick="exportJson()">📋 Copy JSON</button>
+            <button class="btn btn-green btn-sm"   onclick="importJsonPrompt()">📥 Import JSON</button>
+          </div>
+          <div class="json-viewer" id="json-viewer">Loading…</div>
+        </div>
+
+        <div class="card">
+          <h2>✏️ Edit Individual Fields</h2>
+          <div class="input-row">
+            <div class="input-group">
+              <label>Player Name</label>
+              <input type="text" id="edit-name" placeholder="Name" />
+            </div>
+            <div class="input-group" style="max-width:130px">
+              <label>Grade</label>
+              <select id="edit-grade">
+                <option value="K">K</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+              </select>
+            </div>
+            <div class="input-group" style="max-width:130px">
+              <label>Star Coins</label>
+              <input type="number" id="edit-stars" min="0" />
+            </div>
+            <div class="input-group" style="max-width:130px">
+              <label>Energy (1–5)</label>
+              <input type="number" id="edit-energy" min="1" max="5" />
+            </div>
+          </div>
+          <button class="btn btn-green" onclick="saveEdits()">💾 Save Changes</button>
+        </div>
+      </div>
+
+      <!-- ─── LEVEL CONTROL ─────────────────────────────────── -->
+      <div class="tab-panel" id="tab-level">
+        <div class="card">
+          <h2>🎮 Jump to Any Level</h2>
+          <div class="level-current">
+            <span id="cur-level-display">—</span>
+            <small>current level</small>
+          </div>
+          <div class="level-controls">
+            <button onclick="adjustLevel(-10)">−10</button>
+            <button onclick="adjustLevel(-1)">−</button>
+            <span id="level-jump-val">1</span>
+            <button onclick="adjustLevel(+1)">+</button>
+            <button onclick="adjustLevel(+10)">+10</button>
+          </div>
+          <div style="text-align:center; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="applyLevelJump()">🚀 Set Level &amp; Play</button>
+            <button class="btn btn-copy"    onclick="applyLevelOnly()">📝 Set Level (no redirect)</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>📜 Completed Levels</h2>
+          <div id="completed-levels-list" style="color: var(--muted); font-size:0.9rem;"></div>
+          <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-green btn-sm" onclick="completeAllUpToCurrent()">✅ Mark all levels up to current as done</button>
+            <button class="btn btn-danger btn-sm" onclick="clearCompletedLevels()">🗑 Clear completed list</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── ORG CODES ─────────────────────────────────────── -->
+      <div class="tab-panel" id="tab-codes">
+        <div class="card">
+          <h2>🔑 Registered Org Codes</h2>
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:16px;">
+            These hashes are hard-coded in <code>index.html</code> and <code>manage-codes.js</code>.
+            To add a new code, generate it below and paste the hash into both files.
+          </p>
+          <table class="codes-table">
+            <thead>
+              <tr>
+                <th>Code (plain text)</th>
+                <th>SHA-256 Hash</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody id="codes-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>⚙️ Generate New Code Hash</h2>
+          <div class="input-row">
+            <div class="input-group">
+              <label>New Org Code (will be uppercased)</label>
+              <input type="text" id="new-code-input" placeholder="e.g. CHILDRENS2027"
+                     autocapitalize="characters" spellcheck="false" />
+            </div>
+            <button class="btn btn-primary" style="align-self:flex-end" onclick="generateHash()">
+              Generate Hash
+            </button>
+          </div>
+          <div class="hash-result" id="hash-result">
+            <div class="label">SHA-256 Hash (paste into index.html VALID_HASHES and manage-codes.js)</div>
+            <div id="hash-value"></div>
+            <button class="btn btn-copy btn-sm" style="margin-top:10px" onclick="copyHash()">📋 Copy Hash</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🗂 index.html snippet</h2>
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">
+            Open <code>index.html</code> and add the generated line inside the <code>VALID_HASHES</code> Set:
+          </p>
+          <div class="json-viewer" id="snippet-preview" style="max-height:160px"></div>
+        </div>
+      </div>
+
+    </div><!-- /container -->
+  </div><!-- /admin-content -->
+
+  <div id="admin-toast">✅ Done!</div>
+
+  <script>
+    /* ── Guard: only allow admin-flagged sessions ── */
+    const GATE_KEY  = 'bunnydash_gate_v1';
+    const SAVE_KEY  = 'bunnydash_save_v1';
+
+    const stored = localStorage.getItem(GATE_KEY);
+    if (stored !== 'admin') {
+      document.getElementById('access-denied').style.display = 'block';
+    } else {
+      document.getElementById('admin-content').style.display = 'block';
+      initAdmin();
+    }
+
+    /* ── Registered codes (keep in sync with index.html + manage-codes.js) ── */
+    const REGISTERED_CODES = [
+      { code: 'HOPEHERO',       hash: '49e9777255a096003c5d876e99ac2dd764e31985ee7cfc4f900c01c24466c51b', role: 'Partner' },
+      { code: 'BUNNYDASH',      hash: 'a3755082c8076ec83225f7059af93ab8d4e40afd397e58e7fa7b5138937f023f', role: 'Hospital / Child Life' },
+      { code: 'WARRIOR2026',    hash: '083a57c4e00dac894dd6b85425c89c7310b45529afaa532932b01bb5f3bffcb7', role: 'Annual (2026)' },
+      { code: 'ADMINBDASH2026', hash: '101e2d6eaecdc368edf8727ac03ad7a56f9086648e04576ca35cd55d7f56a619', role: '🔧 Admin' },
+    ];
+
+    /* ── Save helpers ── */
+    function getSave() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
+    function setSave(data) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    }
+
+    /* ── Tab switching ── */
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'player')    refreshPlayerTab();
+        if (btn.dataset.tab === 'level')     refreshLevelTab();
+        if (btn.dataset.tab === 'codes')     renderCodesTab();
+        if (btn.dataset.tab === 'dashboard') renderDashboard();
+      });
+    });
+
+    /* ── Init ── */
+    function initAdmin() {
+      renderDashboard();
+      renderCodesTab();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       DASHBOARD
+    ════════════════════════════════════════════════════════ */
+    function renderDashboard() {
+      const save = getSave();
+      const grid = document.getElementById('stat-grid');
+      if (!save) {
+        grid.innerHTML = '<p style="color:var(--muted)">No save data found. Player hasn\'t started yet.</p>';
+        return;
+      }
+      const acc = save.totalQuestions > 0
+        ? Math.round((save.totalCorrect / save.totalQuestions) * 100) : 0;
+      const stats = [
+        { val: save.playerName || '—',       lbl: 'Player Name' },
+        { val: save.currentLevel ?? 1,        lbl: 'Current Level' },
+        { val: save.highestLevel ?? 1,         lbl: 'Highest Level' },
+        { val: save.starCoins ?? 0,            lbl: 'Star Coins' },
+        { val: save.totalCorrect ?? 0,         lbl: 'Correct Answers' },
+        { val: `${acc}%`,                      lbl: 'Overall Accuracy' },
+        { val: save.streakDays ?? 0,           lbl: 'Day Streak' },
+        { val: save.sessionsPlayed ?? 0,       lbl: 'Sessions Played' },
+        { val: save.grade ?? '—',              lbl: 'Grade' },
+        { val: save.completedLevels?.length ?? 0, lbl: 'Levels Completed' },
+        { val: save.unlockedCharacters?.length ?? 1, lbl: 'Characters Unlocked' },
+      ];
+      grid.innerHTML = stats.map(s =>
+        `<div class="stat-box"><div class="val">${_esc(String(s.val))}</div><div class="lbl">${s.lbl}</div></div>`
+      ).join('');
+
+      /* badges */
+      const BADGES = [
+        { id: 'firstLevel',   emoji: '🌟', label: 'First Level',   check: s => s.completedLevels?.length >= 1 },
+        { id: 'fiveLevels',   emoji: '🏅', label: 'Five Levels',   check: s => s.completedLevels?.length >= 5 },
+        { id: 'tenLevels',    emoji: '🥇', label: 'Ten Levels',    check: s => s.completedLevels?.length >= 10 },
+        { id: 'streak3',      emoji: '🔥', label: '3-Day Streak',  check: s => s.streakDays >= 3 },
+        { id: 'streak7',      emoji: '💫', label: 'Week Warrior',  check: s => s.streakDays >= 7 },
+        { id: 'stars50',      emoji: '⭐', label: 'Star Hoarder',  check: s => s.starCoins >= 50 },
+        { id: 'perfect10',    emoji: '✨', label: 'Perfect 10',    check: s => s.totalCorrect >= 10 },
+        { id: 'allSubjects',  emoji: '📚', label: 'All-Rounder',   check: s => {
+          const sa = s.subjectAccuracy || {};
+          return (sa.math?.length||0) > 0 && (sa.reading?.length||0) > 0 && (sa.science?.length||0) > 0;
+        }},
+      ];
+      const bl = document.getElementById('badge-list');
+      bl.innerHTML = BADGES.map(b => {
+        const earned = b.check(save);
+        return `<div class="badge-chip ${earned ? 'earned' : 'locked'}">${b.emoji} ${b.label}</div>`;
+      }).join('');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       PLAYER TAB
+    ════════════════════════════════════════════════════════ */
+    function refreshPlayerTab() {
+      refreshJsonView();
+      const save = getSave();
+      if (save) {
+        const n = document.getElementById('edit-name');
+        const g = document.getElementById('edit-grade');
+        const s = document.getElementById('edit-stars');
+        const e = document.getElementById('edit-energy');
+        if (n) n.value = save.playerName || '';
+        if (g) g.value = save.grade || '3';
+        if (s) s.value = save.starCoins ?? 0;
+        if (e) e.value = save.energy ?? 3;
+      }
+    }
+
+    function refreshJsonView() {
+      const save = getSave();
+      const el = document.getElementById('json-viewer');
+      if (!save) { el.textContent = 'No save data in localStorage.'; return; }
+      el.innerHTML = syntaxHighlight(JSON.stringify(save, null, 2));
+    }
+
+    function exportJson() {
+      const raw = localStorage.getItem(SAVE_KEY) || '{}';
+      navigator.clipboard.writeText(raw).then(() => toast('📋 JSON copied to clipboard!'));
+    }
+
+    function importJsonPrompt() {
+      const raw = prompt('Paste save JSON here:');
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        setSave(parsed);
+        refreshJsonView();
+        renderDashboard();
+        toast('✅ Save data imported!');
+      } catch { toast('❌ Invalid JSON — nothing changed.'); }
+    }
+
+    function saveEdits() {
+      const save = getSave();
+      if (!save) { toast('❌ No save data to edit.'); return; }
+      const name   = document.getElementById('edit-name').value.trim();
+      const grade  = document.getElementById('edit-grade').value;
+      const stars  = parseInt(document.getElementById('edit-stars').value, 10);
+      const energy = parseInt(document.getElementById('edit-energy').value, 10);
+      if (name)  save.playerName = name;
+      save.grade    = grade;
+      save.starCoins = isNaN(stars) ? save.starCoins : stars;
+      save.energy    = isNaN(energy) ? save.energy : Math.min(5, Math.max(1, energy));
+      setSave(save);
+      refreshJsonView();
+      renderDashboard();
+      toast('💾 Changes saved!');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       LEVEL TAB
+    ════════════════════════════════════════════════════════ */
+    let _jumpLevel = 1;
+
+    function refreshLevelTab() {
+      const save = getSave();
+      const cur = save?.currentLevel ?? 1;
+      document.getElementById('cur-level-display').textContent = cur;
+      _jumpLevel = cur;
+      document.getElementById('level-jump-val').textContent = _jumpLevel;
+      renderCompletedList(save);
+    }
+
+    function adjustLevel(delta) {
+      _jumpLevel = Math.max(1, _jumpLevel + delta);
+      document.getElementById('level-jump-val').textContent = _jumpLevel;
+    }
+
+    function applyLevelOnly() {
+      const save = getSave();
+      if (!save) { toast('❌ No save data.'); return; }
+      save.currentLevel  = _jumpLevel;
+      if (_jumpLevel > save.highestLevel) save.highestLevel = _jumpLevel;
+      setSave(save);
+      document.getElementById('cur-level-display').textContent = _jumpLevel;
+      renderDashboard();
+      toast(`📝 Level set to ${_jumpLevel}`);
+    }
+
+    function applyLevelJump() {
+      applyLevelOnly();
+      window.location.href = 'game/index.html';
+    }
+
+    function jumpToLevel(n) {
+      const save = getSave();
+      if (!save) { toast('❌ No save data.'); return; }
+      save.currentLevel = n;
+      setSave(save);
+      renderDashboard();
+      toast(`↩ Level reset to ${n}`);
+      refreshLevelTab();
+    }
+
+    function renderCompletedList(save) {
+      const el = document.getElementById('completed-levels-list');
+      const cl = save?.completedLevels || [];
+      if (cl.length === 0) { el.textContent = 'No levels completed yet.'; return; }
+      el.textContent = `Completed levels (${cl.length}): ` + cl.sort((a,b)=>a-b).join(', ');
+    }
+
+    function completeAllUpToCurrent() {
+      const save = getSave();
+      if (!save) return;
+      const top = save.currentLevel || 1;
+      const done = new Set(save.completedLevels || []);
+      for (let i = 1; i < top; i++) done.add(i);
+      save.completedLevels = [...done].sort((a,b)=>a-b);
+      setSave(save);
+      renderCompletedList(save);
+      renderDashboard();
+      toast(`✅ Marked levels 1–${top - 1} as completed`);
+    }
+
+    function clearCompletedLevels() {
+      if (!confirm('Clear the completed levels list?')) return;
+      const save = getSave();
+      if (!save) return;
+      save.completedLevels = [];
+      setSave(save);
+      renderCompletedList(save);
+      renderDashboard();
+      toast('🗑 Completed levels cleared');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       ADMIN QUICK ACTIONS
+    ════════════════════════════════════════════════════════ */
+    function unlockAllCharacters() {
+      const save = getSave();
+      if (!save) { toast('❌ No save data.'); return; }
+      save.unlockedCharacters = ['fluff','baby','rolli','sof','fluffcone','champion'];
+      setSave(save);
+      renderDashboard();
+      toast('🐰 All characters unlocked!');
+    }
+
+    function confirmReset() {
+      if (!confirm('This will permanently delete all player progress. Are you sure?')) return;
+      localStorage.removeItem(SAVE_KEY);
+      renderDashboard();
+      refreshPlayerTab();
+      toast('🗑 Player progress reset.');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       CODES TAB
+    ════════════════════════════════════════════════════════ */
+    function renderCodesTab() {
+      const tbody = document.getElementById('codes-tbody');
+      tbody.innerHTML = REGISTERED_CODES.map(c =>
+        `<tr>
+          <td><strong>${_esc(c.code)}</strong></td>
+          <td><span class="hash-mono">${_esc(c.hash)}</span></td>
+          <td>${_esc(c.role)}</td>
+        </tr>`
+      ).join('');
+    }
+
+    async function generateHash() {
+      const raw = document.getElementById('new-code-input').value.trim().toUpperCase();
+      if (!raw) { toast('Enter a code first'); return; }
+      const encoded = new TextEncoder().encode(raw);
+      const buf  = await crypto.subtle.digest('SHA-256', encoded);
+      const hash = [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2,'0')).join('');
+      document.getElementById('hash-value').textContent = hash;
+      document.getElementById('hash-result').style.display = 'block';
+      document.getElementById('snippet-preview').textContent =
+        `// ${raw}\n'${hash}',`;
+    }
+
+    function copyHash() {
+      const h = document.getElementById('hash-value').textContent;
+      navigator.clipboard.writeText(h).then(() => toast('📋 Hash copied!'));
+    }
+
+    /* ════════════════════════════════════════════════════════
+       UTILITIES
+    ════════════════════════════════════════════════════════ */
+    function toast(msg) {
+      const el = document.getElementById('admin-toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    function _esc(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function syntaxHighlight(json) {
+      json = json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return json.replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        match => {
+          let cls = 'json-num';
+          if (/^"/.test(match)) {
+            cls = /:$/.test(match) ? 'json-key' : 'json-str';
+          } else if (/true|false/.test(match)) {
+            cls = 'json-bool';
+          } else if (/null/.test(match)) {
+            cls = 'json-null';
+          }
+          return `<span class="${cls}">${match}</span>`;
+        }
+      );
+    }
+  </script>
+</body>
+</html>

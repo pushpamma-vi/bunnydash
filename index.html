@@ -76,6 +76,7 @@
     .approved-msg .check { font-size: 56px; animation: pop 0.5s cubic-bezier(.36,.07,.19,.97); }
     @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
     .approved-msg p { margin: 12px 0 24px; font-size: 1rem; color: #555; line-height: 1.6; }
+    .approved-msg .btn-play { display: block; }
 
     /* form */
     .gate-form label {
@@ -205,6 +206,9 @@
       <a class="btn-play" href="game/index.html" id="btn-play">
         🐾 Start Playing
       </a>
+      <a class="btn-play btn-admin" href="admin.html" id="btn-admin-panel" style="display:none; margin-top:12px; background: linear-gradient(135deg,#a78bfa,#7c3aed); box-shadow: 0 4px 0 #5b21b6;">
+        🔧 Admin Dashboard
+      </a>
     </div>
 
     <!-- ── Code gate form ── -->
@@ -261,7 +265,11 @@
       'a3755082c8076ec83225f7059af93ab8d4e40afd397e58e7fa7b5138937f023f',
       // WARRIOR2026
       '083a57c4e00dac894dd6b85425c89c7310b45529afaa532932b01bb5f3bffcb7',
+      // ADMINBDASH2026 — admin access (never share with patients)
+      '101e2d6eaecdc368edf8727ac03ad7a56f9086648e04576ca35cd55d7f56a619',
     ]);
+
+    const ADMIN_HASH = '101e2d6eaecdc368edf8727ac03ad7a56f9086648e04576ca35cd55d7f56a619';
 
     const STORAGE_KEY = 'bunnydash_gate_v1';
 
@@ -273,16 +281,19 @@
         .join('');
     }
 
-    function showApproved() {
+    function showApproved(isAdmin) {
       document.getElementById('gate-form').style.display = 'none';
       const msg = document.getElementById('approved-msg');
       msg.style.display = 'block';
+      if (isAdmin) {
+        document.getElementById('btn-admin-panel').style.display = 'inline-block';
+      }
     }
 
-    // Auto-pass if this device was already approved
-    if (localStorage.getItem(STORAGE_KEY) === 'approved') {
-      // Brief welcome back before redirect
-      showApproved();
+    // Auto-pass if this device was already approved or admin
+    const _stored = localStorage.getItem(STORAGE_KEY);
+    if (_stored === 'approved' || _stored === 'admin') {
+      showApproved(_stored === 'admin');
     }
 
     document.getElementById('gate-form').addEventListener('submit', async e => {
@@ -296,10 +307,11 @@
       const hash = await hashCode(raw);
 
       if (VALID_HASHES.has(hash)) {
-        localStorage.setItem(STORAGE_KEY, 'approved');
+        const isAdmin = (hash === ADMIN_HASH);
+        localStorage.setItem(STORAGE_KEY, isAdmin ? 'admin' : 'approved');
         errEl.style.display = 'none';
         input.classList.remove('shake');
-        showApproved();
+        showApproved(hash === ADMIN_HASH);
       } else {
         input.classList.remove('shake');
         // Force reflow to re-trigger shake

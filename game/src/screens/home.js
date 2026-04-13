@@ -68,6 +68,13 @@ const HomeScreen = (() => {
     // --- Level display on play button ---
     const levelNumEl = document.getElementById('home-level-num');
     if (levelNumEl) levelNumEl.textContent = save.currentLevel || 1;
+
+    // --- Admin shortcut (only when admin gate code was used) ---
+    const adminBtn = document.getElementById('btn-admin-shortcut');
+    if (adminBtn) {
+      const isAdmin = localStorage.getItem('bunnydash_gate_v1') === 'admin';
+      adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    }
   }
 
   function _updateStat(id, value) {
