@@ -13,9 +13,9 @@ const CORS = {
   'Cache-Control':               'no-cache',
 };
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   try {
-    const store = getStore({ name: 'bunnybrave', context });
+    const store = getStore('bunnybrave');
     const codes = await store.get('approved-codes', { type: 'json' }).catch(() => []);
     const list  = Array.isArray(codes) ? codes : [];
 

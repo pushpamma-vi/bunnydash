@@ -34,7 +34,7 @@ function esc(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: CORS, body: '' };
   }
@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'requestId required' }) };
   }
 
-  const store = getStore({ name: 'bunnybrave', context });
+  const store = getStore('bunnybrave');
 
   // Load requests
   let requests;
