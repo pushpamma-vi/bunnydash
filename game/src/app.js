@@ -161,6 +161,12 @@ const App = (() => {
       if (panel) panel.style.display = 'none';
     });
 
+    const logoutBtn = document.getElementById('btn-logout');
+    if (logoutBtn) logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('bunnydash_gate_v1');
+      window.location.href = '../index.html';
+    });
+
     // Clicking the dim backdrop (the panel itself, outside the card) closes it
     if (panel) panel.addEventListener('click', e => {
       if (e.target === panel) panel.style.display = 'none';
