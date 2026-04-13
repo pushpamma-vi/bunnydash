@@ -66,48 +66,113 @@ const Platformer = (() => {
 
   /* ── Level generation ─────────────────────────────────────── */
   function _generateLevel(level) {
-    const theme   = _worldTheme(level);
-    const isHard  = level > 45;
+    const theme     = _worldTheme(level);
+    const cfg       = _levelConfig(level);
     const isRainbow = theme.rainbow;
 
-    _platforms = [];
-    _stars     = [];
-    _levelWidth = 2400 + level * 60;
+    _platforms  = [];
+    _stars      = [];
+    _levelWidth = cfg.levelWidth;
 
-    // Starting safe platform
-    _platforms.push({ x: 0, y: 340, w: 200, h: 20, color: '#6dbf67', type: 'ground', safe: true });
+    // Fixed world coordinates — all math is relative to these
+    const GROUND_Y = 340;
+    const Y_MIN    = 80;   // highest allowed platform (near top of canvas)
+    const Y_MAX    = 330;  // lowest normal platform
 
-    // Generate platforms
-    let px = 220;
-    const baseH = 340;
+    // ── Starting safe platform (always wide, always flat) ──────
+    _platforms.push({ x: 0, y: GROUND_Y, w: 230, h: 20, color: '#6dbf67', type: 'ground', safe: true });
 
-    while (px < _levelWidth - 300) {
-      const ph     = _difficultyPhase(level);
-      const gap    = ph.gapBase + Math.random() * ph.gapVar;
-      const dh     = (Math.random() - 0.5) * ph.heightVar * 2;
-      const pw     = isRainbow
+    let px   = 250;
+    let curY = GROUND_Y;  // ← PATH WALKER: curY tracks the current elevation
+
+    // ── Schedule deliberate climb sections across the level ────
+    // Each climb: 3-4 forced upward jumps, then a descent back down.
+    // Even L2 has 1 climb so it looks visibly different from L1.
+    const climbTriggers = [];
+    for (let c = 0; c < cfg.climbSections; c++) {
+      climbTriggers.push((_levelWidth / (cfg.climbSections + 1)) * (c + 1));
+    }
+    let climbTriggerIdx = 0;
+    let climbSteps      = 0;  // upward steps remaining
+    let descentSteps    = 0;  // downward steps remaining after climb
+
+    while (px < _levelWidth - 360) {
+      const gap = cfg.gapMin + Math.random() * cfg.gapVar;
+      const pw  = isRainbow
         ? _rainbowPlatformWidth(level, px)
-        : Math.max(22, ph.platBase + (Math.random() - 0.5) * ph.platVar);
+        : Math.max(28, cfg.platWidth + (Math.random() - 0.5) * cfg.platWidthVar);
 
-      const py = Math.max(100, Math.min(320, baseH + dh));
+      // ── Elevation: path-walker so height variation ACCUMULATES ─
+      let dy = 0;
+      if (climbSteps > 0) {
+        // Forced climb upward — each step requires a full jump
+        const rise = cfg.heightStep > 0
+          ? cfg.heightStep * (0.75 + Math.random() * 0.45)
+          : 35;
+        dy = -rise;
+        climbSteps--;
+        if (climbSteps === 0) descentSteps = 3;
+      } else if (descentSteps > 0) {
+        // Gentle descent after the climb
+        const drop = cfg.heightStep > 0
+          ? cfg.heightStep * (0.4 + Math.random() * 0.35)
+          : 18;
+        dy = drop;
+        descentSteps--;
+      } else {
+        // Free random walk — variance grows with level
+        dy = (Math.random() * 2 - 1) * cfg.heightStep;
 
-      // Rainbow platforms get color-coded widths
+        // Trigger a scheduled climb section?
+        if (
+          climbTriggerIdx < climbTriggers.length &&
+          px >= climbTriggers[climbTriggerIdx]
+        ) {
+          climbSteps = 3 + Math.floor(Math.random() * 2); // 3-4 upward steps
+          climbTriggerIdx++;
+        }
+      }
+
+      curY = Math.max(Y_MIN, Math.min(Y_MAX, curY + dy));
+
       const color = isRainbow ? _rainbowColor(pw) : theme.accent;
 
-      _platforms.push({
-        x: px, y: py, w: pw, h: 16,
+      // ── Moving platform? ──────────────────────────────────────
+      const wantsMoving = climbSteps === 0 && Math.random() < cfg.movingChance;
+      // ── Blinking platform? ───────────────────────────────────
+      const wantsBlink  = climbSteps === 0 && Math.random() < cfg.blinkChance;
+
+      const plat = {
+        x: px, y: curY,
+        baseX: px, baseY: curY,
+        w: pw, h: 16,
         color,
         type: isRainbow ? 'rainbow' : 'normal',
-        swayAmp: isRainbow && level > 80 ? Math.random() * 3 : 0,
-        swayFreq: 0.03 + Math.random() * 0.02,
+        swayAmp:    isRainbow && level > 80 ? 2 + Math.random() * 3 : 0,
+        swayFreq:   0.03 + Math.random() * 0.02,
         swayOffset: Math.random() * Math.PI * 2,
-      });
+      };
 
-      // Place stars on platforms
-      if (Math.random() > 0.4) {
+      if (wantsMoving) {
+        plat.moving    = true;
+        plat.moveAxis  = Math.random() < 0.65 ? 'h' : 'v';
+        plat.moveRange = 28 + Math.random() * 55;
+        plat.moveSpeed = cfg.moveSpeed;
+        plat.movePhase = Math.random() * Math.PI * 2;
+      }
+
+      if (wantsBlink) {
+        plat.blink       = true;
+        plat.blinkPeriod = 75 + Math.floor(Math.random() * 55);
+        plat.blinkOffset = Math.floor(Math.random() * 120);
+      }
+
+      _platforms.push(plat);
+
+      if (Math.random() > 0.42) {
         _stars.push({
           x: px + pw / 2,
-          y: py - 28,
+          y: curY - 28,
           w: 18, h: 18,
           collected: false,
           frame: Math.random() * 100,
@@ -117,24 +182,20 @@ const Platformer = (() => {
       px += pw + gap;
     }
 
-    // Tunnel at the end — kid's original: "if you make it, you come in a tunnel"
-    // Sits on the end platform (y:340); player (h:36) walks at y:304, so tunnel
-    // entrance at y:290 catches the player center
-    _tunnel = { x: _levelWidth - 180, y: 290, w: 90, h: 60 };
+    // ── End safe platform & tunnel ─────────────────────────────
+    _platforms.push({ x: _levelWidth - 340, y: GROUND_Y, w: 340, h: 20, color: '#6dbf67', type: 'ground', safe: true });
+    _tunnel = { x: _levelWidth - 200, y: GROUND_Y - 62, w: 90, h: 60 };
 
-    // End platform to hold the tunnel — wide and safe, can't fall off
-    _platforms.push({ x: _levelWidth - 320, y: 340, w: 320, h: 20, color: '#6dbf67', type: 'ground', safe: true });
-
-    // Place player at start, above first platform
+    // ── Player start ───────────────────────────────────────────
     player.x  = 60;
-    player.y  = 300;
+    player.y  = GROUND_Y - 42;
     player.vx = 0;
     player.vy = 0;
-    player.onGround = false;
-    player.jumpsLeft = 1;
-    player.special = false;
+    player.onGround    = false;
+    player.jumpsLeft   = 1;
+    player.special     = false;
     player.specialTimer = 0;
-    player.facing = 1;
+    player.facing      = 1;
     player.petalPlatforms = [];
 
     _starsCollected = 0;
@@ -153,25 +214,56 @@ const Platformer = (() => {
   }
 
   function _rainbowPlatformWidth(level, x) {
-    // As levels progress, platforms get narrower (kid's design)
     const base = 100 - Math.min(level - 70, 70) * 0.8;
     return Math.max(20, base + (Math.random() - 0.5) * 30);
   }
 
-  /* ── Difficulty phase (one clear step-up every 5 levels) ───────── */
-  function _difficultyPhase(level) {
-    // p = 0 for levels 1-5, p = 1 for 6-10, p = 2 for 11-15, …
-    const p = Math.floor((level - 1) / 5);
+  /* ── Per-level difficulty config ─────────────────────────────
+     Every single level has distinct parameters so L1 vs L2 is
+     immediately visible:
+       L1 → perfectly flat, wide platforms, walkable gaps, no movers
+       L2 → first height variation + one forced climb sequence
+       L3 → first moving platform, wider gaps
+       L5 → vertical camera kicks in
+       L8 → blinking (disappearing) platforms introduced
+       L10+ → all elements active at increasing intensity
+  ──────────────────────────────────────────────────────────── */
+  function _levelConfig(level) {
+    const S = Math.max(0, Math.min(level - 1, 30)); // cap scaling at L31
     return {
-      // gap between platforms grows noticeably each phase
-      gapBase:   Math.min(50  + p * 26, 280),
-      gapVar:    Math.min(22  + p * 10, 90),
-      // platform width shrinks noticeably each phase
-      platBase:  Math.max(140 - p * 14, 22),
-      platVar:   24,
-      // vertical height variation grows each phase
-      heightVar: Math.min(10  + p *  5, 65),
+      // Platform width: 165px at L1, −6px per level, floor 28px
+      platWidth:     Math.max(28,  165 - S * 6),
+      platWidthVar:  14,
+      // Gap: 42px at L1 (nearly walkable), +12px per level, cap 220px
+      gapMin:        Math.min(220, 42  + S * 12),
+      gapVar:        Math.min(55,  14  + S * 2),
+      // Height step: ZERO at L1 (dead flat!), 20px at L2, +7/level, cap 105
+      heightStep:    S === 0 ? 0 : Math.min(105, 20 + (S - 1) * 7),
+      // Moving platforms: none for L1-2, chance grows from L3
+      movingChance:  S < 2 ? 0 : Math.min(0.52, (S - 2) * 0.055),
+      moveSpeed:     0.013 + S * 0.0012,
+      // Blinking platforms: none until L8
+      blinkChance:   S < 7 ? 0 : Math.min(0.28, (S - 7) * 0.04),
+      // Climb sections: none at L1, 1 at L2, grows every 2 levels
+      climbSections: S === 0 ? 0 : Math.min(6, 1 + Math.floor((S - 1) / 2)),
+      // Vertical camera: from L5 onwards
+      verticalCamera: level >= 5,
+      // Level length grows slightly each level
+      levelWidth:    2100 + level * 95,
     };
+  }
+
+  /* ── Update moving platforms (called every frame) ─────────── */
+  function _updateMovingPlatforms() {
+    for (const plat of _platforms) {
+      if (!plat.moving) continue;
+      const phase = _frame * plat.moveSpeed + (plat.movePhase || 0);
+      if (plat.moveAxis === 'h') {
+        plat.x = plat.baseX + Math.sin(phase) * plat.moveRange;
+      } else {
+        plat.y = plat.baseY + Math.sin(phase) * plat.moveRange;
+      }
+    }
   }
 
   /* ── Input ────────────────────────────────────────────────── */
@@ -322,10 +414,16 @@ const Platformer = (() => {
     }
 
     for (const plat of allPlats) {
-      // Sway effect for rainbow platforms
-      const realY = plat.sway ?
-        plat.y + Math.sin(_frame * plat.swayFreq + plat.swayOffset) * plat.swayAmp :
-        plat.y;
+      // Blinking platforms are non-solid during off-phase
+      if (plat.blink) {
+        const bp = (_frame + (plat.blinkOffset || 0)) % plat.blinkPeriod;
+        if (bp > plat.blinkPeriod * 0.55) continue;
+      }
+
+      // Sway (rainbow L80+) or moving platform — realY is the authoritative Y
+      const realY = plat.swayAmp
+        ? plat.y + Math.sin(_frame * plat.swayFreq + plat.swayOffset) * plat.swayAmp
+        : plat.y;
 
       const px = player.x, py = player.y;
       const pw = player.w, ph = player.h;
@@ -338,7 +436,20 @@ const Platformer = (() => {
         player.y  = realY - ph;
         player.vy = 0;
         player.onGround = true;
-        player.jumpsLeft = _charDef && _charDef.platformer.special === 'petal_float' ? 1 : 1;
+        player.jumpsLeft = 1;
+
+        // Moving platform rider — carry player along with the platform
+        if (plat.moving) {
+          const prevPhase = (_frame - 1) * plat.moveSpeed + (plat.movePhase || 0);
+          const currPhase = _frame       * plat.moveSpeed + (plat.movePhase || 0);
+          if (plat.moveAxis === 'h') {
+            player.x += (Math.sin(currPhase) - Math.sin(prevPhase)) * plat.moveRange;
+          } else {
+            const prevPlatY = plat.baseY + Math.sin(prevPhase) * plat.moveRange;
+            const currPlatY = plat.baseY + Math.sin(currPhase) * plat.moveRange;
+            if (currPlatY < prevPlatY) player.y += (currPlatY - prevPlatY); // pushed up
+          }
+        }
       }
     }
   }
@@ -387,8 +498,9 @@ const Platformer = (() => {
   /* ── Fall detection ──────────────────────────────────────────── */
   function _checkFall(canvasH) {
     if (_levelDone || _fellRecently) return;
-    if (player.y > canvasH + 100) {
-      _fellRecently = true;             // prevent re-firing while falling
+    // Use camera-relative threshold so vertical scrolling doesn't affect it
+    if (player.y > _camera.y + canvasH + 110) {
+      _fellRecently = true;
       setTimeout(() => { _fellRecently = false; }, 2000);
       if (_onFall) _onFall();
     }
@@ -396,10 +508,21 @@ const Platformer = (() => {
 
   /* ── Camera ───────────────────────────────────────────────── */
   function _updateCamera(cw, ch) {
+    // Horizontal: always track player
     const targetX = player.x - cw * 0.3;
     _camera.x += (targetX - _camera.x) * 0.1;
     _camera.x = Math.max(0, Math.min(_camera.x, _levelWidth - cw));
-    _camera.y = 0;
+
+    // Vertical: from L5 the camera scrolls up/down with the player
+    // giving the level a true three-dimensional feel
+    const cfg = _levelConfig(_level);
+    if (cfg.verticalCamera) {
+      const targetY = player.y - ch * 0.42; // keep player ~42% from top
+      _camera.y += (targetY - _camera.y) * 0.07;
+      _camera.y = Math.max(-80, _camera.y); // don't over-scroll above sky
+    } else {
+      _camera.y = 0;
+    }
   }
 
   /* ── Rendering ────────────────────────────────────────────── */
@@ -429,12 +552,33 @@ const Platformer = (() => {
     ctx.fillStyle = theme.ground;
     ctx.fillRect(_camera.x, groundY - 10, cw, 15);
 
-    // Platforms
+    // Platforms — handle blinking (fade before disappear) and sway
     for (const plat of _platforms) {
-      const py = plat.sway
+      let alpha = 1;
+      if (plat.blink) {
+        const bp = (_frame + (plat.blinkOffset || 0)) % plat.blinkPeriod;
+        if (bp > plat.blinkPeriod * 0.55) continue; // invisible
+        if (bp > plat.blinkPeriod * 0.38) {
+          // Fade-out warning before vanishing — player gets a visual cue
+          alpha = 1 - (bp - plat.blinkPeriod * 0.38) / (plat.blinkPeriod * 0.17);
+        }
+      }
+      const py = plat.swayAmp
         ? plat.y + Math.sin(_frame * plat.swayFreq + plat.swayOffset) * plat.swayAmp
         : plat.y;
+      if (alpha < 1) ctx.globalAlpha = alpha;
       _drawPlatform(ctx, plat.x, py, plat.w, plat.h, plat.color, plat.type, plat.life);
+      if (alpha < 1) ctx.globalAlpha = 1;
+
+      // Arrow indicator on moving platforms so kids can see which way to plan
+      if (plat.moving) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(plat.moveAxis === 'h' ? '↔' : '↕', plat.x + plat.w / 2, py - 4);
+        ctx.restore();
+      }
     }
 
     // Petal platforms
@@ -630,6 +774,7 @@ const Platformer = (() => {
     const cw = _canvas.width;
     const ch = _canvas.height;
 
+    _updateMovingPlatforms(); // move platforms first, then resolve player against them
     _updatePlayer();
     _resolveCollisions();
     _checkStars();
