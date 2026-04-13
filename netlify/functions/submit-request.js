@@ -58,14 +58,14 @@ exports.handler = async (event) => {
 
   // Persist request in Blobs
   try {
-    const store    = getStore('bunnybrave');
+    const store    = getStore({ name: 'bunnybrave', siteID: process.env.NETLIFY_SITE_ID, token: process.env.NETLIFY_API_TOKEN });
     const existing = await store.get('requests', { type: 'json' }).catch(() => []);
     const list     = Array.isArray(existing) ? existing : [];
     list.push(newRequest);
     await store.setJSON('requests', list);
   } catch (err) {
     console.error('[submit-request] Blob error:', err);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Storage unavailable — please try again.', _debug: String(err?.message ?? err).slice(0, 200) }) };
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Storage unavailable — please try again.' }) };
   }
 
   return {

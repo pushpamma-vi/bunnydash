@@ -15,7 +15,7 @@ const CORS = {
 
 exports.handler = async (event) => {
   try {
-    const store = getStore('bunnybrave');
+    const store = getStore({ name: 'bunnybrave', siteID: process.env.NETLIFY_SITE_ID, token: process.env.NETLIFY_API_TOKEN });
     const codes = await store.get('approved-codes', { type: 'json' }).catch(() => []);
     const list  = Array.isArray(codes) ? codes : [];
 

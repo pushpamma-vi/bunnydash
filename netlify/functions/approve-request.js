@@ -57,7 +57,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'requestId required' }) };
   }
 
-  const store = getStore('bunnybrave');
+  const store = getStore({ name: 'bunnybrave', siteID: process.env.NETLIFY_SITE_ID, token: process.env.NETLIFY_API_TOKEN });
 
   // Load requests
   let requests;

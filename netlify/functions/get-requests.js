@@ -24,7 +24,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store    = getStore('bunnybrave');
+    const store    = getStore({ name: 'bunnybrave', siteID: process.env.NETLIFY_SITE_ID, token: process.env.NETLIFY_API_TOKEN });
     const requests = await store.get('requests', { type: 'json' }).catch(() => []);
     // Sort: pending first, then by date desc
     const list = (Array.isArray(requests) ? requests : [])
