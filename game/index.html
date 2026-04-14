@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <meta name="description" content="Bunny Brave — A learning adventure for warriors in recovery" />
   <title>Bunny Brave 🐰</title>
-  <link rel="stylesheet" href="src/style.css" />
+  <link rel="stylesheet" href="src/style.css?v=20260415b" />
 </head>
 <body>
 
@@ -250,8 +250,8 @@
       </div>
 
       <div class="quiz-question-box" id="quiz-question-box" role="region" aria-label="Math question">
-        <div class="quiz-question" id="quiz-question" aria-live="polite"></div>
         <div class="quiz-subject-badge" id="quiz-subject-badge">Math</div>
+        <div class="quiz-question" id="quiz-question" aria-live="polite"></div>
       </div>
 
       <div class="quiz-answer-display" aria-live="polite" aria-label="Your answer">
@@ -342,6 +342,13 @@
         <input type="checkbox" id="set-tts" checked />
         <span class="toggle-switch"></span>
       </label>
+      <div id="voice-picker-row" style="display:none;margin:8px 0">
+        <label class="field-label" for="set-voice">Voice</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="set-voice" class="field-select" style="flex:1"></select>
+          <button class="btn-secondary" id="btn-test-voice" style="padding:6px 12px;white-space:nowrap">▶ Test</button>
+        </div>
+      </div>
       <label class="field-label" for="set-grade">My Grade</label>
       <select id="set-grade" class="field-select"></select>
       <label class="field-label">Today's Energy</label>
@@ -361,8 +368,8 @@
   <script src="src/systems/save.js?v=20260413c"></script>
   <script src="src/systems/questions.js?v=20260413c"></script>
   <script src="src/systems/hope.js?v=20260413c"></script>
-  <script src="src/systems/tts.js?v=20260415a"></script>
-  <script src="src/systems/audio.js?v=20260415a"></script>
+  <script src="src/systems/tts.js?v=20260415b"></script>
+  <script src="src/systems/audio.js?v=20260415b"></script>
   <script src="src/characters/characters.js?v=20260413c"></script>
   <script src="src/engine/renderer.js?v=20260413c"></script>
   <script src="src/engine/platformer.js?v=20260415a"></script>
@@ -376,6 +383,6 @@
   <script src="src/screens/unlock.js?v=20260413c"></script>
   <script src="src/screens/progress.js?v=20260413c"></script>
   <script src="src/screens/characters-screen.js?v=20260413c"></script>
-  <script src="src/app.js?v=20260413c"></script>
+  <script src="src/app.js?v=20260415b"></script>
 </body>
 </html>

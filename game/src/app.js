@@ -178,6 +178,20 @@ const App = (() => {
       if (window.TTS) TTS.setEnabled(val);
     });
 
+    // --- Voice picker (populated by TTS.refreshVoices) ---
+    const voiceSel  = document.getElementById('set-voice');
+    const testBtn   = document.getElementById('btn-test-voice');
+    if (voiceSel) {
+      voiceSel.addEventListener('change', () => {
+        if (window.TTS) TTS.selectVoice(voiceSel.value);
+      });
+    }
+    if (testBtn) {
+      testBtn.addEventListener('click', () => {
+        if (window.TTS) TTS.speak("Hi! I'm your reading buddy. Let's learn together!");
+      });
+    }
+
     _bindToggle('set-contrast', val => {
       document.body.classList.toggle('high-contrast', val);
       Save.patch({ settings: { ...Save.get().settings, highContrast: val } });
