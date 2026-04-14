@@ -28,6 +28,7 @@ const Platformer = (() => {
   let _onComplete = null;
   let _onFall     = null;
   let _levelDone  = false;   // guard: fire onComplete only once
+  let _difficultyOffset = 0; // adaptive: -3 (easier) to +3 (harder)
   let _fellRecently = false; // guard: fire onFall only once per fall
   let _fallFrames   = 0;     // counts frames player is airborne+falling
 
@@ -241,17 +242,23 @@ const Platformer = (() => {
     const idx = Math.min(level, T.length - 1);
     const r   = T[idx];
     const ex  = Math.max(0, level - (T.length - 1));
+
+    // Adaptive difficulty: offset shifts effective difficulty
+    // d > 0 = harder (wider gaps, narrower platforms)
+    // d < 0 = easier (smaller gaps, wider platforms, fewer obstacles)
+    const d = _difficultyOffset;
+
     return {
-      gapMin:        Math.min(215, r[0] + ex * 1.5),
+      gapMin:        Math.max(20,  Math.min(215, r[0] + ex * 1.5 + d * 14)),
       gapVar:        32,
-      platWidth:     Math.max(24,  r[1] - ex),
+      platWidth:     Math.max(24,  r[1] - ex - d * 12),
       platWidthVar:  10,
-      heightVar:     Math.min(80,  r[2] + ex * 0.4), // organic free-walk  (small)
-      heightStep:    Math.min(90,  r[3] + ex * 0.4), // forced staircase   (large)
-      movingChance:  Math.min(0.55, r[4] + ex * 0.008),
-      moveSpeed:     0.013 + level * 0.001,
-      blinkChance:   Math.min(0.40, r[5] + ex * 0.008),
-      climbSections: Math.min(8,   r[6]),
+      heightVar:     Math.max(0,   Math.min(80,  r[2] + ex * 0.4 + d * 4)),
+      heightStep:    Math.max(0,   Math.min(90,  r[3] + ex * 0.4 + d * 5)),
+      movingChance:  Math.max(0,   Math.min(0.55, r[4] + ex * 0.008 + d * 0.04)),
+      moveSpeed:     Math.max(0.005, 0.013 + level * 0.001 + d * 0.002),
+      blinkChance:   Math.max(0,   Math.min(0.40, r[5] + ex * 0.008 + d * 0.03)),
+      climbSections: Math.max(0,   Math.min(8,   r[6] + Math.round(d * 0.5))),
       verticalCamera: r[7],
       levelWidth:    1900 + level * 90,
     };
@@ -862,7 +869,13 @@ const Platformer = (() => {
 
   function getStarsCollected() { return _starsCollected; }
 
-  return { init, startLevel, stop, pause, resume, getStarsCollected };
+  function setDifficultyOffset(offset) {
+    _difficultyOffset = Math.max(-3, Math.min(3, offset));
+  }
+
+  function getDifficultyOffset() { return _difficultyOffset; }
+
+  return { init, startLevel, stop, pause, resume, getStarsCollected, setDifficultyOffset, getDifficultyOffset };
 })();
 
 window.Platformer = Platformer;

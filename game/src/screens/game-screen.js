@@ -16,6 +16,50 @@ const GameScreen = (() => {
   let _currentChar  = 'fluff';
   let _fallCount    = 0;
 
+  /* ── Adaptive difficulty (stored in localStorage) ─────────── */
+  const ADAPT_KEY = 'bunnybrave_adaptive_v1';
+
+  function _loadAdaptive() {
+    try { return JSON.parse(localStorage.getItem(ADAPT_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function _saveAdaptive(data) {
+    try { localStorage.setItem(ADAPT_KEY, JSON.stringify(data)); } catch {}
+  }
+
+  // Returns { fails, offset } for a given level
+  function _getAdaptForLevel(level) {
+    const data = _loadAdaptive();
+    const key  = 'L' + level;
+    return data[key] || { fails: 0, offset: 0 };
+  }
+
+  function _recordFall(level) {
+    const data = _loadAdaptive();
+    const key  = 'L' + level;
+    const entry = data[key] || { fails: 0, offset: 0 };
+    entry.fails++;
+    // Every 2 consecutive fails, ease up by 1 (min -3)
+    if (entry.fails >= 2) {
+      entry.offset = Math.max(-3, entry.offset - 1);
+      entry.fails  = 0; // reset fail counter after adjustment
+    }
+    data[key] = entry;
+    _saveAdaptive(data);
+    return entry.offset;
+  }
+
+  function _recordSuccess(level) {
+    const data = _loadAdaptive();
+    const key  = 'L' + level;
+    const entry = data[key] || { fails: 0, offset: 0 };
+    entry.fails = 0;
+    // On success, restore difficulty toward 0 (one step harder)
+    if (entry.offset < 0) entry.offset++;
+    data[key] = entry;
+    _saveAdaptive(data);
+  }
+
   function init() {
     // Pause button
     const pauseBtn   = document.getElementById('btn-pause');
@@ -53,6 +97,9 @@ const GameScreen = (() => {
 
     // Show 2-second level announce, THEN start the platformer
     _showLevelAnnounce(_currentLevel, () => {
+      // Apply adaptive difficulty before generating the level
+      const adapt = _getAdaptForLevel(_currentLevel);
+      Platformer.setDifficultyOffset(adapt.offset);
       Platformer.startLevel(_currentLevel, _currentChar, _onLevelComplete, _onFall);
     });
   }
@@ -110,6 +157,8 @@ const GameScreen = (() => {
   // ---- Platformer callbacks ----
 
   function _onLevelComplete(stars) {
+    // Adaptive: record success, restore difficulty toward normal
+    _recordSuccess(_currentLevel);
     // Stars collected in the platformer run → tunnel celebration → quiz
     TunnelScreen.show(_currentLevel, stars, _currentChar, () => {
       Quiz.showForLevel(_currentLevel, _currentChar, _onQuizResult);
@@ -136,6 +185,9 @@ const GameScreen = (() => {
 
     // Restart same level after short pause
     setTimeout(() => {
+      // Adaptive: record the fall, adjust offset
+      const newOffset = _recordFall(_currentLevel);
+      Platformer.setDifficultyOffset(newOffset);
       Platformer.startLevel(_currentLevel, _currentChar, _onLevelComplete, _onFall);
     }, 1600);
   }
