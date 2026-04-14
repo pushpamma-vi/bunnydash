@@ -588,7 +588,7 @@
     function getAdminKey() {
       let k = localStorage.getItem('bunnybrave_admin_key') || '';
       if (!k) {
-        k = prompt('Enter your Admin Secret key (set in Netlify env ADMIN_SECRET):') || '';
+        k = prompt('Enter your Admin Secret key (set in Cloudflare env ADMIN_SECRET):') || '';
         if (k) localStorage.setItem('bunnybrave_admin_key', k);
       }
       return k;
