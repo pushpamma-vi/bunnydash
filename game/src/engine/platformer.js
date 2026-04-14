@@ -373,6 +373,7 @@ const Platformer = (() => {
         player.vy = BASE_JUMP * jMul;
         player.onGround = false;
         player.jumpsLeft = Math.max(0, player.jumpsLeft - 1);
+        if (window.GameAudio) GameAudio.sfxJump();
 
         // Petal float (Sof) — double jump deposits a petal platform
         if (special === 'petal_float' && !player.onGround && player.jumpsLeft === 0) {
@@ -477,6 +478,7 @@ const Platformer = (() => {
       ) {
         star.collected = true;
         _starsCollected++;
+        if (window.GameAudio) GameAudio.sfxStar();
         // Spawn spark particles at star location (relative to camera)
         if (window.Particles) {
           Particles.spawn({
@@ -502,6 +504,7 @@ const Platformer = (() => {
       _levelDone = true;   // prevent re-firing every frame
       _running   = false;  // stop the loop
       cancelAnimationFrame(_rafId);
+      if (window.GameAudio) GameAudio.sfxLevelComplete();
       if (_onComplete) _onComplete(_starsCollected);
     }
   }
@@ -530,6 +533,7 @@ const Platformer = (() => {
       _fallFrames  = 0;
       _fellRecently = true;
       setTimeout(() => { _fellRecently = false; }, 2200);
+      if (window.GameAudio) GameAudio.sfxFall();
       if (_onFall) _onFall();
     }
   }

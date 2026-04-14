@@ -352,7 +352,18 @@ const App = (() => {
     // 9. Award any earned badges from previous sessions
     _checkAndAwardBadges();
 
-    // 10. Decide first screen
+    // 10. Unlock audio on first user interaction (mobile requirement)
+    if (window.GameAudio) {
+      const _unlockAudio = () => {
+        GameAudio.unlock();
+        document.removeEventListener('click', _unlockAudio);
+        document.removeEventListener('touchstart', _unlockAudio);
+      };
+      document.addEventListener('click', _unlockAudio);
+      document.addEventListener('touchstart', _unlockAudio);
+    }
+
+    // 11. Decide first screen
     if (Save.hasExistingGame()) {
       showScreen('home');
     } else {

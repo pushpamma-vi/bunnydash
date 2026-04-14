@@ -101,6 +101,8 @@ const GameScreen = (() => {
       const adapt = _getAdaptForLevel(_currentLevel);
       Platformer.setDifficultyOffset(adapt.offset);
       Platformer.startLevel(_currentLevel, _currentChar, _onLevelComplete, _onFall);
+      // Start background music
+      if (window.GameAudio) GameAudio.startMusic();
     });
   }
 
@@ -159,6 +161,7 @@ const GameScreen = (() => {
   function _onLevelComplete(stars) {
     // Adaptive: record success, restore difficulty toward normal
     _recordSuccess(_currentLevel);
+    if (window.GameAudio) GameAudio.stopMusic();
     // Stars collected in the platformer run → tunnel celebration → quiz
     TunnelScreen.show(_currentLevel, stars, _currentChar, () => {
       Quiz.showForLevel(_currentLevel, _currentChar, _onQuizResult);
@@ -196,6 +199,7 @@ const GameScreen = (() => {
 
   function _onQuizResult(correct) {
     if (correct) {
+      if (window.GameAudio) GameAudio.sfxCorrect();
       // Level beaten! Advance in save
       const newUnlocks = Save.completeLevel(_currentLevel);
 
@@ -209,6 +213,7 @@ const GameScreen = (() => {
         App.showScreen('home');
       }
     } else {
+      if (window.GameAudio) GameAudio.sfxWrong();
       // Quiz wasn't completed (shouldn't happen in normal flow, but guard)
       App.showScreen('home');
     }
@@ -228,6 +233,7 @@ const GameScreen = (() => {
 
   function _handlePause() {
     Platformer.pause();
+    if (window.GameAudio) GameAudio.stopMusic();
     const overlay = document.getElementById('pause-overlay');
     if (overlay) overlay.style.display = 'flex';
 
@@ -244,12 +250,14 @@ const GameScreen = (() => {
   function _handleResume() {
     _hidePauseOverlay();
     Platformer.resume();
+    if (window.GameAudio) GameAudio.startMusic();
     if (window.TTS) TTS.stop();
   }
 
   function _handleQuit() {
     _hidePauseOverlay();
     Platformer.stop();
+    if (window.GameAudio) GameAudio.stopMusic();
     if (window.TTS) TTS.stop();
     App.showScreen('home');
   }
