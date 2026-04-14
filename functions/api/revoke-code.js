@@ -16,9 +16,11 @@ function resp(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: CORS });
 }
 
-function isAdmin(request, env) {
+function checkAdmin(request, env) {
+  if (!env.ADMIN_SECRET) return { ok: false, msg: 'ADMIN_SECRET not configured in Cloudflare env vars' };
   const key = request.headers.get('x-admin-key');
-  return key && env.ADMIN_SECRET && key === env.ADMIN_SECRET;
+  if (!key || key !== env.ADMIN_SECRET) return { ok: false, msg: 'Wrong admin key' };
+  return { ok: true };
 }
 
 async function sha256(text) {
@@ -28,7 +30,8 @@ async function sha256(text) {
 }
 
 export async function onRequestPost({ request, env }) {
-  if (!isAdmin(request, env)) return resp({ error: 'Unauthorized' }, 401);
+  const auth = checkAdmin(request, env);
+  if (!auth.ok) return resp({ error: auth.msg }, 401);
 
   let body;
   try { body = await request.json(); }
