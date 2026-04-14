@@ -509,16 +509,17 @@ const Platformer = (() => {
       return;
     }
 
-    // Accumulate frames where the player is airborne AND falling downward
-    if (player.vy > 2) {
+    // Count every frame with downward velocity (falling, not jumping)
+    if (player.vy > 1) {
       _fallFrames++;
-    } else {
-      // Rising (jump) — don't count against the player
-      _fallFrames = Math.max(0, _fallFrames - 1);
+    }
+    // Reset counter only when actively rising (genuine jump, not brief hover)
+    if (player.vy < -2) {
+      _fallFrames = 0;
     }
 
-    // ~1.3 s of downward freefall (≈78 frames @ 60 fps) == fallen off
-    if (_fallFrames > 78) {
+    // ~0.67 s of downward freefall (≈40 frames @ 60 fps) == fallen off
+    if (_fallFrames > 40) {
       _fallFrames  = 0;
       _fellRecently = true;
       setTimeout(() => { _fellRecently = false; }, 2200);
@@ -537,8 +538,8 @@ const Platformer = (() => {
     // regardless of level. Keep player at ~45% from top of screen.
     const targetY = player.y - ch * 0.45;
     _camera.y += (targetY - _camera.y) * 0.09;
-    // Don't scroll so far up that sky goes below the canvas top
-    _camera.y = Math.max(-120, _camera.y);
+    // Clamp: don't scroll too far up (-120) or too far below ground (GROUND_Y + 60)
+    _camera.y = Math.max(-120, Math.min(_camera.y, 340 + 60));
   }
 
   /* ── Rendering ────────────────────────────────────────────── */
